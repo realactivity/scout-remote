@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Scout Remote application services and ports: bridge transport, command lifecycle, sync, identity. Platform-neutral by rule (spec §16.1).</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../ScoutRemote.Domain/ScoutRemote.Domain.csproj" />
-  </ItemGroup>
-</Project>

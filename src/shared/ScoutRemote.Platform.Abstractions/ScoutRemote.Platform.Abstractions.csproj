@@ -1,5 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Description>Platform-service interfaces (spec §16): secure storage, background work, notifications, auth callbacks, external-app launching. Android implements first; iOS implements the same interfaces in Phase 4.</Description>
-  </PropertyGroup>
-</Project>

@@ -1,6 +1,7 @@
 <Project>
-  <!-- Shared libraries must stay platform-neutral (spec §16.1): no Android/iOS
-       APIs outside src/mobile platform heads and plugin/bridge hosts. -->
+  <!-- .NET here serves the desktop bridge only: ScoutRemote.Domain (protocol model)
+       and ScoutRemote.Bridge (MCP helper host). The mobile client is Kotlin — see
+       src/mobile and docs/mobile-framework-kotlin.md. -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Scout Remote domain model: agent status, commands, responses, artifacts, usage. Platform-neutral by rule (spec §16.1).</Description>
+    <Description>Bridge-side protocol domain model: agent status, commands, responses, events, artifacts. Serializes to/from contracts/schemas; the Kotlin mobile client mirrors these types against the same contracts.</Description>
   </PropertyGroup>
 </Project>
