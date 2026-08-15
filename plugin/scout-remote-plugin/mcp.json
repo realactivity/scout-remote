@@ -6,7 +6,8 @@
       "command": "dotnet",
       "args": ["${PLUGIN_ROOT}/bridge/publish/ScoutRemote.Bridge.dll"],
       "env": {
-        "SCOUT_REMOTE_AGENT_ID": "primary"
+        "SCOUT_REMOTE_AGENT_ID": "primary",
+        "SCOUT_REMOTE_STATE_DIR": "${PLUGIN_DATA}/state"
       }
     }
   }

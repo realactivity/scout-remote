@@ -49,7 +49,7 @@ Key decisions (see spec §1 and §3–§7 for full rationale):
 |---|---|
 | Identity | **One** Entra public-client app registration shared by mobile and desktop bridge; each client signs in independently with MSAL and keeps its own OS-protected token cache. **Tokens are never transferred between devices.** |
 | Data plane | Microsoft Graph + OneDrive **App Folder** (`Files.ReadWrite.AppFolder`) — user-owned, least-privilege, cross-device. Both clients resolve the same `/me/drive/special/approot`. |
-| Desktop bridge | Packaged as an **Agent Plugins 1.0** bundle: a Scout `SKILL.md` for orchestration plus a **local MCP bridge/helper** that owns Graph authentication and protocol I/O. |
+| Desktop bridge | Packaged as a **conformant Agent Plugins 1.0.0** bundle (validated against the official schemas; see [`plugin/scout-remote-plugin/README.md`](plugin/scout-remote-plugin/README.md) for the feature-by-feature showcase): a Scout `SKILL.md` for orchestration plus a **local MCP bridge/helper** that owns Graph authentication and protocol I/O. |
 | Chat model | **Bridge-owned conversations** — append-only event streams reproducible from protocol data. Native Scout chat mirroring is an optional, feature-flagged future adapter. |
 | Command semantics | Every command has an ID, timestamp, **expiry**, status, and auditable result. At-least-once observation, exactly-once effect: idempotency via processed receipts; expired/replayed/malformed commands never execute. |
 | Safety | Sensitive work returns `waiting_for_desktop_approval` — there is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). No secrets ever land in OneDrive protocol JSON. |
@@ -74,10 +74,11 @@ scout-remote/
 │       └── app/                      Android client (Compose + MSAL) — bootstrapped at Phase 0;
 │                                     iOS follows in Phase 4 against the same core + contracts
 ├── plugin/
-│   └── scout-remote-plugin/          Desktop bridge as an Agent Plugins 1.0 package
-│       ├── plugin.json               Package identity (Agent Plugins 1.0 manifest)
-│       ├── mcp.json                  Local MCP bridge/helper server declaration
-│       ├── skills/scout-remote-bridge/SKILL.md   Agent-facing orchestration instructions
+│   └── scout-remote-plugin/          Desktop bridge — conformant Agent Plugins 1.0.0 package
+│       ├── plugin.json               Identity + metadata (components discovered at fixed paths)
+│       ├── mcp.json                  Typed stdio MCP server (${PLUGIN_ROOT}/${PLUGIN_DATA})
+│       ├── CHANGELOG.md              SemVer history per the standard layout
+│       ├── skills/scout-remote-bridge/           SKILL.md + references/ quick reference
 │       └── bridge/ScoutRemote.Bridge/            MCP helper: desktop MSAL + Graph + protocol I/O
 └── ScoutRemote.sln
 ```
