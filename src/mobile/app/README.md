@@ -1,21 +1,29 @@
 # app/
 
-Android client. Kotlin and Jetpack Compose.
+Android client. Kotlin and Jetpack Compose. Application id `dev.lantern.app`.
 
 **Android is the only Phase 0/1 target.** iOS follows in Phase 4 against the
 same `core` module and contract tests (spec §16.1, §19). Framework decision
 in [docs/mobile-framework-kotlin.md](../../../docs/mobile-framework-kotlin.md).
 
-This directory intentionally contains no generated project yet. The Android
-module is bootstrapped at the start of Phase 0 with current Android Studio / AGP
-templates so the scaffold matches the toolchain actually in use.
+## What Phase 0 ships
 
-1. In Android Studio, create an "Empty Activity" (Compose) project with
-   application id `dev.lantern.app`, then move its `app/` module here and
-   add `include(":app")` to [`../settings.gradle.kts`](../settings.gradle.kts).
-2. Add `implementation(project(":core"))` plus MSAL Android
-   (`com.microsoft.identity.client:msal`) once the Entra app registration
-   exists (spec §3, and the week-one App Folder scope validation of spec §19).
+| Piece | Notes |
+|---|---|
+| Compose Home | Agent state, explicit `lastSeenUtc`, send-message affordance |
+| Theme | Colors loaded from [`docs/brand-tokens.json`](../../../docs/brand-tokens.json) |
+| `SecureStorage` | Keystore-backed `EncryptedSharedPreferences` |
+| `AuthCallbackHandler` | MSAL redirect / PKCE wiring; real sign-in is human-gated |
+| `BackgroundScheduler` / `NotificationService` | Honest stubs: they record the request, they do not pretend work ran |
+| `IdentityService` | MSAL Android public client; throws clearly when `LANTERN_CLIENT_ID` is unset |
+| Local mailbox | Filesystem App Folder under the app files dir (harness). Graph is human-gated. |
+
+```bash
+( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
+```
+
+`BrandTokensTest` asserts every semantic hex equals the tokens file. No
+emulator is required.
 
 ## Rules for this module
 
@@ -26,7 +34,7 @@ templates so the scaffold matches the toolchain actually in use.
   - `SecureStorage` uses Keystore-backed encrypted storage (holds the MSAL
     token cache).
   - `BackgroundScheduler` uses WorkManager status/response checks within
-    Doze/standby constraints.
+    Doze/standby constraints (Phase 1 attaches the worker).
   - `NotificationService` covers completion, failure, and desktop-attention
     notifications. Heartbeat digests only (spec §9.2).
   - `AuthCallbackHandler` handles MSAL redirect/browser flow (auth code and
