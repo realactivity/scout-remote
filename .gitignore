@@ -1,6 +1,7 @@
 # .NET
 bin/
 obj/
+plugin/scout-remote-plugin/bridge/publish/
 *.user
 *.userosscache
 *.suo
