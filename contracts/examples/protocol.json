@@ -2,7 +2,7 @@
   "protocol": "lantern",
   "version": "1.0",
   "agentId": "primary",
-  "bridgeVersion": "1.0.0",
+  "bridgeVersion": "0.1.0",
   "capabilities": [
     "status.read",
     "activity.read",

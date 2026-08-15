@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lantern.dev/schemas/protocol.schema.json",
+  "$id": "https://raw.githubusercontent.com/realactivity/scout-remote/main/contracts/schemas/protocol.schema.json",
   "title": "Lantern protocol handshake (protocol.json)",
   "description": "Bridge-published handshake declaring protocol version and capabilities. Spec section 6.1.",
   "type": "object",

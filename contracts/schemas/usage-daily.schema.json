@@ -1,12 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lantern.dev/schemas/usage-daily.schema.json",
-  "title": "Daily usage aggregate (telemetry/usage-daily.json)",
-  "description": "Illustrative usage/cost aggregate. Never authoritative vendor billing data. Never contains tokens, prompts, or credentials. Spec section 13.",
+  "$id": "https://raw.githubusercontent.com/realactivity/scout-remote/main/contracts/schemas/usage-daily.schema.json",
+  "title": "Daily usage aggregate (telemetry/usage/{yyyy-MM-dd}.json)",
+  "description": "Illustrative usage/cost aggregate, one file per day. The current day's file is mutable (ETag-guarded); a closed day is immutable. Never authoritative vendor billing data. Never contains tokens, prompts, or credentials. Spec section 13.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["date", "commands"],
+  "required": ["schemaVersion", "date", "commands"],
   "properties": {
+    "schemaVersion": { "const": 1 },
     "date": { "type": "string", "format": "date" },
     "commands": { "type": "integer", "minimum": 0 },
     "workIqCalls": { "type": "integer", "minimum": 0 },
