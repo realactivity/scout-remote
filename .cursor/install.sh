@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idempotent repository bootstrap for Scout Remote.
+# Idempotent repository bootstrap for Lantern.
 #
 # The repo is polyglot: a .NET 8 solution (bridge protocol model + MCP helper host)
 # and a Kotlin/JVM Gradle project (:core contract tests). The default Cloud Agent
