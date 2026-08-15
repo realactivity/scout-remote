@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 /**
  * The single Json configuration for all protocol I/O.
  *
- * - explicitNulls = false: absent optional fields stay absent on the wire — the schemas
+ * - explicitNulls = false. Absent optional fields stay absent on the wire. The schemas
  *   type optional fields (e.g. `targetCommandId`) as non-null strings, so encoding
  *   explicit nulls would produce schema-invalid JSON.
  * - encodeDefaults = false: only values actually set are written.

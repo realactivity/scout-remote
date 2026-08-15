@@ -23,7 +23,7 @@ import kotlinx.serialization.encodeToString
 
 /**
  * Golden-file contract tests: every canonical payload in contracts/examples must decode
- * into the domain model and survive a decode → encode → decode round trip unchanged.
+ * into the domain model and survive a decode, encode, decode round trip unchanged.
  * The bridge runs the same fixtures against the .NET domain model (contracts/README.md).
  */
 class ContractGoldenFileTest {

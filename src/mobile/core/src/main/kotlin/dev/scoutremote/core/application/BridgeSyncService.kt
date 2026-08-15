@@ -5,7 +5,7 @@ import dev.scoutremote.core.domain.RemoteResponse
 import kotlinx.datetime.Instant
 
 /**
- * Sync orchestration (spec §16.2). Foreground: protocol → status → active conversation →
+ * Sync orchestration (spec §16.2). Foreground order is protocol, status, active conversation,
  * activity delta. Background: lightweight status/response checks at OS-permitted intervals.
  * Uses ETags for mutable files (status, settings, in-flight responses) and stored delta
  * cursors to avoid re-listing the app folder.

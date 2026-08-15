@@ -31,7 +31,7 @@ xcuserdata/
 *.swp
 .DS_Store
 
-# Local secrets — never commit tokens, keys, or MSAL caches
+# Local secrets. Never commit tokens, keys, or MSAL caches.
 *.pfx
 *.snk
 appsettings.local.json

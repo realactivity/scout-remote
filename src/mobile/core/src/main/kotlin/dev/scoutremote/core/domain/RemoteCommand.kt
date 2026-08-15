@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 data class RemoteCommand(
     val schemaVersion: Int,
 
-    /** ULID — globally unique and never reused (replay control, spec §11). */
+    /** ULID. Globally unique and never reused (replay control, spec §11). */
     val commandId: String,
 
     val conversationId: String,

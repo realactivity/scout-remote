@@ -15,7 +15,7 @@
 // Agent Plugins client this expands to ${PLUGIN_DATA}/state (persists across plugin
 // updates, spec §9.1); when the variable is unset or contains a literal unexpanded
 // placeholder, fall back to the platform per-user app-data directory. MSAL token
-// caches never go there — OS-protected storage only (design spec §10).
+// caches never go there. OS-protected storage only (design spec §10).
 //
 // Security invariants: no secrets are ever returned to Scout or written to protocol
 // files; processed commands are never re-executed; expired commands get an expired

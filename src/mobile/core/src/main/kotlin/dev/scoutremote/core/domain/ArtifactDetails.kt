@@ -4,7 +4,7 @@ import kotlinx.datetime.Instant
 
 /**
  * Resolved OneDrive artifact metadata for the Artifacts screen (name, type, size, created,
- * open link — spec §9). Not a protocol file: the transport resolves an [ArtifactReference]'s
+ * open link, spec §9). Not a protocol file. The transport resolves an [ArtifactReference]'s
  * driveItemId against Graph on demand. Content is never copied into protocol JSON (spec §11.1).
  */
 data class ArtifactDetails(

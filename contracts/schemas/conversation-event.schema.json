@@ -11,7 +11,7 @@
     "eventId": {
       "type": "string",
       "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
-      "description": "ULID; unique and time-sortable — the stream is ordered by eventId."
+      "description": "ULID. Unique and time-sortable. The stream is ordered by eventId."
     },
     "conversationId": { "type": "string", "minLength": 1 },
     "type": {

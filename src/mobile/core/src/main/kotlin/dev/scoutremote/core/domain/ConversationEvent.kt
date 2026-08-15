@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
 data class ConversationEvent(
     val schemaVersion: Int,
 
-    /** ULID; unique and time-sortable — the stream is ordered by eventId. */
+    /** ULID. Unique and time-sortable. The stream is ordered by eventId. */
     val eventId: String,
 
     val conversationId: String,
