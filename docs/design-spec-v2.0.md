@@ -92,13 +92,14 @@ The design is grounded in Microsoft documentation available as of 14 August 2026
 |---|---|
 | Scout is currently desktop-only on Windows 11+ and macOS 12+. | Mobile is a companion/remote surface, not a native Scout runtime. |
 | Scout supports heartbeat and scheduled/condition-triggered automations. | Bridge processing can occur without an interactive user turn. |
-| Scout supports custom SKILL.md skills. Scout admin policy also exposes MCP-server controls. | Use a skill for orchestration and a local MCP server/helper for deterministic bridge operations. |
+| Scout supports custom SKILL.md skills. Scout admin policy also exposes MCP-server controls. | Use a skill for orchestration and a local MCP server/helper for deterministic bridge operations. Current install paths: skills in `~/.copilot/skills/` (per-machine) or `~/.copilot/m-skills/` (cloud-synced workspace tier); MCP servers in `~/.copilot/mcp-config.json`. Preview-era paths; re-check per release. |
+| Scout is built on the OpenClaw runtime, but exposes only skills and MCP as extension surfaces. The substrate's control-plane features (gateway WebSocket API, device-paired nodes, messaging channels, webhooks) are unsupported and undocumented in Scout, and heartbeat/automations/MCP can be disabled by Intune/Group Policy. | Build on skills + MCP only; never on the raw substrate. See the decision record [scout-openclaw-substrate.md](scout-openclaw-substrate.md). |
 | Agent Plugins 1.0 packages Agent Skills and MCP servers in one portable directory. | Distribute Lantern Bridge as a plugin package; keep components installable separately. |
 | Microsoft Graph exposes OneDrive App Folder access via `Files.ReadWrite.AppFolder`. | Both mobile and desktop bridge use the same Entra application ID and signed-in user to reach the same approot. |
 | MSAL supports native public-client authentication on mobile and desktop. | No client secret; each device/client maintains its own secure token cache. |
 
 > **Unsupported assumptions to avoid**
-> Do not assume Scout currently installs Agent Plugins 1.0 packages natively. Public Scout docs document custom skills and expose MCP-server administration, but do not yet document an Agent Plugins package installer. For v1, treat Agent Plugins as the portable source/distribution layout, then install/register the contained skill and MCP server by the supported Scout mechanisms. Also do not assume a public Scout endpoint for native conversations, approvals, arbitrary task cancellation, or event subscription.
+> Do not assume Scout currently installs Agent Plugins 1.0 packages natively. Public Scout docs document custom skills and expose MCP-server administration, but do not yet document an Agent Plugins package installer. For v1, treat Agent Plugins as the portable source/distribution layout, then install/register the contained skill and MCP server by the supported Scout mechanisms. Also do not assume a public Scout endpoint for native conversations, approvals, arbitrary task cancellation, or event subscription. Do not depend on OpenClaw substrate surfaces that Scout does not document (gateway WebSocket API, device pairing/nodes, messaging channels, webhooks), even where they are physically present on the machine ([decision record](scout-openclaw-substrate.md)).
 
 ## 4. Logical architecture
 
@@ -595,7 +596,7 @@ No move toward a standing backend, relay, or direct device-to-desktop connection
 
 | Phase | Scope | Exit criteria |
 |---|---|---|
-| 0 — Android spike | Android + desktop MSAL; Agent Plugin package; Graph App Folder; hand-authored protocol files; manual Scout invocation. | **Week one:** `Files.ReadWrite.AppFolder` proven in the real target tenant from both a desktop and an Android MSAL public client under the real app registration (acquire scope, resolve approot, cross-device write/read round trip, admin-consent behavior confirmed) — or the `Files.ReadWrite` fallback is explicitly recorded (update §10.2 and §11) with a defined protocol root outside approot. Then: one Android-to-desktop round trip works; Android and desktop independently reach the same App Folder without token sharing. |
+| 0 — Android spike | Android + desktop MSAL; Agent Plugin package; Graph App Folder; hand-authored protocol files; manual Scout invocation. | **Week one:** `Files.ReadWrite.AppFolder` proven in the real target tenant from both a desktop and an Android MSAL public client under the real app registration (acquire scope, resolve approot, cross-device write/read round trip, admin-consent behavior confirmed) — or the `Files.ReadWrite` fallback is explicitly recorded (update §10.2 and §11) with a defined protocol root outside approot. **Also week one:** confirm tenant policy has not disabled Scout heartbeat/automations or blocked local stdio MCP servers (Intune/Group Policy under `HKLM\SOFTWARE\Policies\Scout`); without these the bridge has no pulse ([decision record](scout-openclaw-substrate.md)). Then: one Android-to-desktop round trip works; Android and desktop independently reach the same App Folder without token sharing. |
 | 1 — Android MVP | Home, Activity, bridge Chats, Artifacts, Settings; packaged skill + MCP bridge; in-flight watch (§16.2); Android secure storage/background behavior; Google Play packaging; no backend. | Reliable single-user Android daily use; signed build ready for Play internal/closed test; desktop re-auth and offline handling proven. |
 | 2 — Cost + polish | Usage screen, Work IQ budget controls, stronger diagnostics, retention controls. | User can tune prompts/cost without inspecting files. |
 | 3 — Notifications | Optional Azure notification service and Graph subscriptions per §17.1. | Completion/attention notifications arrive promptly and securely on Android. |
@@ -619,6 +620,7 @@ No move toward a standing backend, relay, or direct device-to-desktop connection
 |---|---|---|
 | Can native Scout chats be listed through a supported API? | Assume no; use bridge-owned chats. | Microsoft publishes documented session/chat API. |
 | Can Scout publish event callbacks faster than heartbeat? | Assume asynchronous polling/automation. | Supported webhook/event/agent API exists. |
+| Should Lantern use Scout's OpenClaw substrate directly (gateway WS, nodes, channels)? | No. Skills + MCP only ([decision record](scout-openclaw-substrate.md)). | Microsoft documents a supported gateway/node API — it then becomes a new transport adapter behind the same domain interfaces. |
 | Can mobile approve Scout sensitive actions? | No. | Microsoft exposes explicit secure approval API and policy model. |
 | Should the app have a backend? | No for MVP. | Push latency, multi-user policy, or audit requirements justify it (§17.1 is pre-designed). |
 | Should D365 be integrated? | Optional adapter only. | A concrete mobile D365 scenario requires it. |
@@ -642,7 +644,7 @@ Decisions recorded by this revision:
 
 1. Install/configure Scout on the desktop and confirm Microsoft 365 sign-in.
 2. Register Lantern as one Entra public-client application. Configure Android and desktop/native platform redirects for the MVP; leave iOS platform configuration for Phase 4.
-3. Install the Lantern Agent Plugin source package. Until Scout documents native Agent Plugins installation, place the contained SKILL.md in a supported Scout skills directory and register the contained local MCP bridge with Scout.
+3. Install the Lantern Agent Plugin source package. Until Scout documents native Agent Plugins installation, place the contained SKILL.md in a supported Scout skills directory (currently `~/.copilot/skills/`, or `~/.copilot/m-skills/` to cloud-sync it across the user's machines) and register the contained local MCP bridge in Scout's MCP configuration (currently `~/.copilot/mcp-config.json`).
 4. Run the desktop bridge sign-in once. Confirm it uses the Lantern app ID, signs in as the intended Microsoft 365 user, and stores its MSAL cache only in OS-protected local storage.
 5. Create/enable the bridge heartbeat or automation and set an acceptable work-hours/cadence policy.
 6. Install the Android Lantern build and sign in with the same Microsoft 365 identity. Confirm Android uses Keystore-backed secure storage through the platform abstraction.

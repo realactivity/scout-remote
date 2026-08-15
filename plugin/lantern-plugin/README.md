@@ -74,9 +74,13 @@ supported mechanisms.
    ```
 
 2. **Install the skill.** Place `skills/lantern-bridge/` (including
-   `references/`) into a supported Scout skills directory.
+   `references/`) into a supported Scout skills directory — currently
+   `~/.copilot/skills/` (per-machine) or `~/.copilot/m-skills/` (cloud-synced
+   across the user's machines). Preview-era paths; re-check per release
+   (`docs/scout-openclaw-substrate.md` in the source repository).
 3. **Register the MCP server** through Scout's supported MCP configuration
-   path, using `mcp.json` as the shape. Outside a conformant Agent Plugins
+   path (currently `~/.copilot/mcp-config.json`), using `mcp.json` as the
+   shape. Outside a conformant Agent Plugins
    client, `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` are not expanded. Substitute
    the plugin directory yourself. The bridge falls back to the platform
    app-data directory when `LANTERN_STATE_DIR` is unset or unexpanded.
