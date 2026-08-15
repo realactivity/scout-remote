@@ -8,12 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugin", "plugin", "{A10000
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutRemote.Domain", "src\shared\ScoutRemote.Domain\ScoutRemote.Domain.csproj", "{B1000000-0000-4000-8000-000000000001}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutRemote.Application", "src\shared\ScoutRemote.Application\ScoutRemote.Application.csproj", "{B1000000-0000-4000-8000-000000000002}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutRemote.Transport.Graph", "src\shared\ScoutRemote.Transport.Graph\ScoutRemote.Transport.Graph.csproj", "{B1000000-0000-4000-8000-000000000003}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutRemote.Platform.Abstractions", "src\shared\ScoutRemote.Platform.Abstractions\ScoutRemote.Platform.Abstractions.csproj", "{B1000000-0000-4000-8000-000000000004}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutRemote.Bridge", "plugin\scout-remote-plugin\bridge\ScoutRemote.Bridge\ScoutRemote.Bridge.csproj", "{B1000000-0000-4000-8000-000000000005}"
 EndProject
 Global
@@ -26,18 +20,6 @@ Global
 		{B1000000-0000-4000-8000-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1000000-0000-4000-8000-000000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1000000-0000-4000-8000-000000000001}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000002}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000003}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000003}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000003}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B1000000-0000-4000-8000-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B1000000-0000-4000-8000-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B1000000-0000-4000-8000-000000000005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B1000000-0000-4000-8000-000000000005}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1000000-0000-4000-8000-000000000005}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,9 +27,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B1000000-0000-4000-8000-000000000001} = {A1000000-0000-4000-8000-000000000001}
-		{B1000000-0000-4000-8000-000000000002} = {A1000000-0000-4000-8000-000000000001}
-		{B1000000-0000-4000-8000-000000000003} = {A1000000-0000-4000-8000-000000000001}
-		{B1000000-0000-4000-8000-000000000004} = {A1000000-0000-4000-8000-000000000001}
 		{B1000000-0000-4000-8000-000000000005} = {A1000000-0000-4000-8000-000000000002}
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution

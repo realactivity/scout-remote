@@ -1,6 +1,7 @@
 # .NET
 bin/
 obj/
+plugin/scout-remote-plugin/bridge/publish/
 *.user
 *.userosscache
 *.suo
@@ -9,7 +10,11 @@ artifacts/
 TestResults/
 *.binlog
 
-# MAUI / Android
+# Gradle / Kotlin
+build/
+.kotlin/
+
+# Android
 *.apk
 *.aab
 *.keystore

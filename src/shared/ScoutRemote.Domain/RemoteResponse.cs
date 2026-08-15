@@ -2,7 +2,8 @@ namespace ScoutRemote.Domain;
 
 /// <summary>
 /// Bridge-to-mobile response (responses/{commandId}.json, schemaVersion 1).
-/// A completed response is immutable; corrections are new events referencing the original command.
+/// Mutable while in flight (the bridge updates it through Acknowledged/Running); immutable once
+/// it reaches a terminal status — corrections are new events referencing the original command.
 /// Contract: contracts/schemas/response.schema.json.
 /// </summary>
 public sealed record RemoteResponse
@@ -21,10 +22,13 @@ public sealed record RemoteResponse
     public UsageInfo? Usage { get; init; }
 }
 
-/// <summary>Command state machine (spec Appendix A.1).</summary>
+/// <summary>
+/// Wire command status (spec Appendix A.1, response.schema.json).
+/// The client-local "draft" state — an unsent command cached on-device (spec §5, §15) —
+/// deliberately does not appear here: drafts never reach the wire.
+/// </summary>
 public enum CommandStatus
 {
-    Draft,
     Queued,
     Acknowledged,
     Running,

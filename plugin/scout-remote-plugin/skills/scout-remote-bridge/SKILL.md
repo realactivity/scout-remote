@@ -7,6 +7,8 @@ description: Process Scout Remote mobile companion commands from the OneDrive Ap
 
 You connect this desktop Scout to the Scout Remote mobile app through a versioned JSON protocol stored in the OneDrive App Folder. All data-plane operations go through the `scout-remote-bridge` MCP server — never through direct file or Graph access from this skill.
 
+For the App Folder layout, the command state machine, and the disposition rules, read [references/protocol-quick-reference.md](references/protocol-quick-reference.md).
+
 ## When to run
 
 - On each heartbeat/automation tick configured for the bridge.

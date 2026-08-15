@@ -1,10 +1,13 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "scout-remote-bridge": {
+      "type": "stdio",
       "command": "dotnet",
-      "args": ["run", "--project", "${PLUGIN_DIR}/bridge/ScoutRemote.Bridge"],
+      "args": ["${PLUGIN_ROOT}/bridge/publish/ScoutRemote.Bridge.dll"],
       "env": {
-        "SCOUT_REMOTE_AGENT_ID": "primary"
+        "SCOUT_REMOTE_AGENT_ID": "primary",
+        "SCOUT_REMOTE_STATE_DIR": "${PLUGIN_DATA}/state"
       }
     }
   }
