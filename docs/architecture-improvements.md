@@ -2,11 +2,13 @@
 
 Latency and validation addendum.
 
-**Status** Accepted, 15 August 2026. Extends
-[design spec v1.2](design-spec-v1.2.md). Does not modify it. Where this addendum
-and the spec differ in emphasis, the spec's security boundaries always win.
-Nothing here weakens the product boundary, the desktop approval model, or the
-no-token-sharing rule.
+**Status** Accepted, 15 August 2026. **Merged into
+[design spec v2.0](design-spec-v2.0.md)** (§16.2 in-flight watch, §17.1 Mode B
+constraints, §19 week-one scope validation); this file is retained as the
+decision record and reasoning. Originally written as an addendum to
+[design spec v1.2](design-spec-v1.2.md). Where this record and the spec differ
+in emphasis, the spec's security boundaries always win. Nothing here weakens
+the product boundary, the desktop approval model, or the no-token-sharing rule.
 
 ## Context
 

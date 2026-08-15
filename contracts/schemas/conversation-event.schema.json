@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lantern.dev/schemas/conversation-event.schema.json",
+  "$id": "https://raw.githubusercontent.com/realactivity/scout-remote/main/contracts/schemas/conversation-event.schema.json",
   "title": "Conversation event (conversations/{conversationId}/{eventId}.json)",
   "description": "Append-only bridge-owned remote-thread event. Immutable once written; corrections are new events referencing the original commandId. The thread is reproducible from protocol data: command and response events reference their protocol files by commandId instead of duplicating content. Spec section 8.1.",
   "type": "object",

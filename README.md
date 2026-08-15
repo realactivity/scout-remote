@@ -10,11 +10,13 @@ Apollo for Reddit, Ivory for Mastodon): a distinct product name with "for Micros
 Scout" as a descriptor, verified against Microsoft's trademark guidelines. Brand and
 UX specs are in [`docs/brand-guidelines.md`](docs/brand-guidelines.md).
 
-> **Status** Proposed reference architecture (spec v1.2, 14 August 2026).
+> **Status** Accepted reference architecture (spec v2.0, 15 August 2026).
 > Pre-implementation scaffolding.
 >
-> **Authoritative design** [`docs/design-spec-v1.2.md`](docs/design-spec-v1.2.md)
-> ([original PDF](docs/Scout-Remote-Design-Spec-v1.2.pdf)).
+> **Authoritative design** [`docs/design-spec-v2.0.md`](docs/design-spec-v2.0.md).
+> The v1.2 pair ([markdown](docs/design-spec-v1.2.md),
+> [original PDF](docs/Scout-Remote-Design-Spec-v1.2.pdf), authored under the
+> working name "Scout Remote") is historical.
 
 ## Product boundary
 
@@ -86,21 +88,24 @@ Key decisions are in spec §1 and §3 to §7.
 | Desktop bridge | A **conformant Agent Plugins 1.0.0** bundle, validated against the official schemas. See [`plugin/lantern-plugin/README.md`](plugin/lantern-plugin/README.md). A Scout `SKILL.md` handles orchestration. A **local MCP bridge/helper** owns Graph authentication and protocol I/O. |
 | Chat model | **Bridge-owned conversations.** Append-only event streams, reproducible from protocol data. Native Scout chat mirroring is an optional, feature-flagged future adapter. |
 | Command semantics | Every command has an ID, timestamp, **expiry**, status, and auditable result. At-least-once observation, exactly-once effect. Idempotency uses processed receipts. Expired, replayed, or malformed commands never execute. |
-| Safety | Sensitive work returns `waiting_for_desktop_approval`. There is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). No secrets ever land in OneDrive protocol JSON. |
-| Mobile framework | **Kotlin and Jetpack Compose.** This supersedes the spec's MAUI recommendation. See [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md). The Graph transport can be swapped for a native Scout API adapter if Microsoft ships one. The desktop bridge stays on .NET. The `contracts/` schemas are the language-neutral boundary. |
+| Compatibility | **Tolerant reader, strict writer** (spec §15.2). Bridge-authored files may gain optional fields in a minor revision; readers ignore unknown fields. The one strict gate is the bridge's command inbox: a command that fails full schema validation is rejected, never executed. Mobile-authored evolution is gated by the `protocol.json` capability handshake. |
+| Safety | Sensitive work returns `waiting_for_desktop_approval`. There is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). Command authenticity rests on App Folder write access; `requestedBy` is audit metadata, never authorization (spec §11.2). No secrets ever land in OneDrive protocol JSON. |
+| Mobile framework | **Kotlin and Jetpack Compose** (spec §16; reasoning in [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md)). The Graph transport can be swapped for a native Scout API adapter if Microsoft ships one. The desktop bridge stays on .NET. The `contracts/` schemas are the language-neutral boundary. |
 | Deployment | Mode A (personal, no backend) for MVP. Optional notification service (Mode B) and enterprise brokering (Mode C) later. |
 
 ## Repository layout
 
 ```
 lantern/
-├── docs/                             Reference architecture (spec v1.2, markdown and PDF)
+├── docs/                             Reference architecture (spec v2.0; v1.2 kept as history)
 ├── contracts/                        Shared bridge-protocol contracts (JSON Schema and examples)
 │   ├── schemas/                      protocol, status, command, response, events, usage
-│   └── examples/                     Canonical payloads from the spec
+│   ├── examples/                     Canonical payloads from the spec (golden files)
+│   └── validate_examples.py          Schema validation of the golden files (run in CI)
 ├── src/
 │   ├── shared/
-│   │   └── Lantern.Domain/       Bridge-side .NET protocol model
+│   │   ├── Lantern.Domain/       Bridge-side .NET protocol model
+│   │   └── Lantern.Domain.Tests/ .NET golden-file contract tests
 │   └── mobile/                       Kotlin Gradle project
 │       ├── core/                     Pure Kotlin/JVM. No Android APIs.
 │       │                             Domain models, ports, platform interfaces,
@@ -140,13 +145,12 @@ Appendix C).
 The full first-time setup checklist and troubleshooting order are in the spec's
 operational runbook (§21).
 
-Accepted refinements sit in
-[`docs/architecture-improvements.md`](docs/architecture-improvements.md). They
-cover adaptive foreground polling for in-flight commands (Phase 1), content-free
-Mode B push notifications when interactive use grows, and validating the
-`Files.ReadWrite.AppFolder` tenant assumption in week one of Phase 0, before any
-feature code. The mobile client uses Kotlin and Jetpack Compose rather than the
-spec's MAUI recommendation. That decision is recorded in
+Spec v2.0 folds in the previously separate addenda: adaptive foreground polling
+for in-flight commands (§16.2), content-free Mode B push notifications when
+interactive use grows (§17.1), and validating the `Files.ReadWrite.AppFolder`
+tenant assumption in week one of Phase 0, before any feature code (§19). The
+reasoning is retained in
+[`docs/architecture-improvements.md`](docs/architecture-improvements.md) and
 [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md).
 
 ## Roadmap
@@ -165,3 +169,9 @@ spec's MAUI recommendation. That decision is recorded in
 mobile APIs, the domain-level interfaces (status, activity, remote command,
 response, artifact, usage) stay put. Swap the transport adapter. Do not rewrite
 the app.
+
+## License
+
+[MIT](LICENSE). The plugin package carries its own copy of the license plus the
+matching SPDX `license` field in its manifest, so it stays licensed when
+distributed separately.

@@ -3,6 +3,7 @@
   "name": "lantern-bridge",
   "version": "0.1.0",
   "description": "Lantern desktop bridge: a Scout skill plus a local stdio MCP bridge that connects Scout to the Lantern mobile companion through the OneDrive App Folder protocol.",
+  "license": "MIT",
   "author": {
     "name": "Lantern project"
   },

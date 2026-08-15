@@ -16,6 +16,7 @@ lantern-plugin/
 │                                     components from the manifest (§5, §6).
 ├── mcp.json                          One stdio MCP server, explicitly typed (§7.2)
 ├── CHANGELOG.md                      SemVer history (§10.2; standard layout, §4.2)
+├── LICENSE                           MIT (standard layout, §4.2; matches the manifest's SPDX field)
 ├── skills/
 │   └── lantern-bridge/          Discovered as an immediate child of skills/ (§7.1)
 │       ├── SKILL.md                  Orchestration instructions. Short, policy-focused.
@@ -30,7 +31,7 @@ lantern-plugin/
 
 | Spec feature | § | Use here |
 |---|---|---|
-| Closed manifest | §5 | `plugin.json` carries the two required fields (`$schema`, `name`) plus every applicable metadata field (`version`, `description`, `author`, `homepage`, `repository`, `keywords`). Nothing else. The schema is closed, and components cannot be declared inline. |
+| Closed manifest | §5 | `plugin.json` carries the two required fields (`$schema`, `name`) plus every applicable metadata field (`version`, `description`, `license`, `author`, `homepage`, `repository`, `keywords`). Nothing else. The schema is closed, and components cannot be declared inline. |
 | Fixed-path discovery | §6 | Skills come from `skills/`. MCP config comes from root `mcp.json`. There is nothing to configure and no discovery order to learn. The file structure *is* the contract. |
 | Agent Skills packaging | §7.1 | One skill, `lantern-bridge`, frontmatter per [agentskills.io](https://agentskills.io/specification). Operational detail (protocol layout, state machine, disposition rules) lives in `references/`, keeping `SKILL.md` short while the agent loads depth only when needed. |
 | Typed MCP transport | §7.2 | `"type": "stdio"` is explicit. A client never infers the transport from config shape. |
@@ -54,9 +55,10 @@ curl -sO https://agent-plugins.org/schemas/1.0.0/mcp.schema.json
 python3 -c "import json, jsonschema; jsonschema.validate(json.load(open('plugin.json')), json.load(open('plugin.schema.json')))"
 ```
 
-Known gap. The standard layout includes a `LICENSE` file and the manifest
-supports an SPDX `license` field. This repository has not chosen a license yet.
-Add both together when it does.
+The package ships the standard-layout `LICENSE` file (MIT) together with the
+matching SPDX `license` field in `plugin.json`, so the license travels with the
+plugin even when it is distributed separately from the repository (which
+carries the same license at its root).
 
 ## Installing (until Scout is an Agent Plugins client)
 
@@ -72,9 +74,13 @@ supported mechanisms.
    ```
 
 2. **Install the skill.** Place `skills/lantern-bridge/` (including
-   `references/`) into a supported Scout skills directory.
+   `references/`) into a supported Scout skills directory — currently
+   `~/.copilot/skills/` (per-machine) or `~/.copilot/m-skills/` (cloud-synced
+   across the user's machines). Preview-era paths; re-check per release
+   (`docs/scout-openclaw-substrate.md` in the source repository).
 3. **Register the MCP server** through Scout's supported MCP configuration
-   path, using `mcp.json` as the shape. Outside a conformant Agent Plugins
+   path (currently `~/.copilot/mcp-config.json`), using `mcp.json` as the
+   shape. Outside a conformant Agent Plugins
    client, `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` are not expanded. Substitute
    the plugin directory yourself. The bridge falls back to the platform
    app-data directory when `LANTERN_STATE_DIR` is unset or unexpanded.

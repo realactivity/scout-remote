@@ -2,11 +2,12 @@
 
 Kotlin and Jetpack Compose.
 
-**Status** Accepted, 15 August 2026. Supersedes the ".NET MAUI reference
-implementation (React Native acceptable)" recommendation of
-[design spec v1.2](design-spec-v1.2.md) §1 and §16. Everything else in the spec
-stands. This changes the mobile implementation technology, not the
-architecture. The spec itself sanctions the swap. The §20 invariant makes the
+**Status** Accepted, 15 August 2026. **Merged into
+[design spec v2.0](design-spec-v2.0.md)** (§1, §16); this file is retained as
+the decision record and reasoning. Originally superseded the ".NET MAUI
+reference implementation (React Native acceptable)" recommendation of
+[design spec v1.2](design-spec-v1.2.md) §1 and §16. This changed the mobile
+implementation technology, not the architecture. The §20 invariant makes the
 framework an implementation detail behind the contracts and domain interfaces.
 
 ## Decision

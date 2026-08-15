@@ -132,4 +132,16 @@ class ContractGoldenFileTest {
         val status = json.decodeFromString<AgentStatus>(read("status.json"))
         assertEquals(Instant.parse("2026-08-13T22:32:10Z"), status.lastSeenUtc)
     }
+
+    @Test
+    fun `tolerant reader ignores unknown fields from a newer bridge`() {
+        // Compatibility policy (spec §15.2): bridge-authored files may gain optional
+        // fields in a minor revision; deployed mobile clients must keep working.
+        val withUnknownField = read("status.json").replaceFirst(
+            "\"schemaVersion\": 1,",
+            "\"schemaVersion\": 1, \"introducedInAMinorRevision\": {\"nested\": true},",
+        )
+        val status = json.decodeFromString<AgentStatus>(withUnknownField)
+        assertEquals(AgentState.WORKING, status.state)
+    }
 }

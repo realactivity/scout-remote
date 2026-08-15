@@ -14,3 +14,9 @@ as recommended by Agent Plugins 1.0.0 §10.2.
 - Bridge state directory contract. `LANTERN_STATE_DIR` (backed by
   `${PLUGIN_DATA}` under a conformant client) holds delta cursors, receipt
   mirrors, and diagnostics.
+- Alignment with design spec v2.0: the command state machine in the protocol
+  quick reference starts at `acknowledged` (`draft`/`queued` are client-local
+  states), and daily usage aggregates live at
+  `telemetry/usage/{yyyy-MM-dd}.json`.
+- MIT license: standard-layout `LICENSE` at the plugin root plus the matching
+  SPDX `license` field in `plugin.json`.

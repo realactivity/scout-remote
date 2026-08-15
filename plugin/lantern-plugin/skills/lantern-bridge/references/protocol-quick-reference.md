@@ -15,21 +15,23 @@ commands/processed/                    Idempotency receipts
 responses/{commandId}.json             Bridge to mobile (mutable until terminal)
 conversations/{conversationId}/        Append-only thread events
 activity/{yyyy-MM-dd}/                 Append-only activity events
-telemetry/usage-daily.json             Daily usage aggregate
+telemetry/usage/{yyyy-MM-dd}.json      One usage aggregate per day
 ```
 
 ## Command state machine
 
 ```
-queued -> acknowledged -> running -> completed | failed | expired
-                                   | waiting_for_desktop_approval
-                                   | canceled   (only when cancellation is CONFIRMED)
+acknowledged -> running -> completed | failed | expired
+                         | waiting_for_desktop_approval
+                         | canceled   (only when cancellation is CONFIRMED)
 ```
 
-Write `acknowledged` immediately on pickup. The mobile app fast-polls
-in-flight responses and needs early evidence. A response is mutable until it
-reaches a terminal status. After that it is immutable, and corrections are new
-events referencing the original `commandId`.
+Your first write for any picked-up command is `acknowledged`, immediately. The
+mobile app fast-polls in-flight responses and needs early evidence. (The
+"draft" and "queued" states shown in the app are client-local; they never
+appear in a response file.) A response is mutable until it reaches a terminal
+status. After that it is immutable, and corrections are new events referencing
+the original `commandId`.
 
 ## Disposition rules
 

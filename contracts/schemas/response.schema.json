@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://lantern.dev/schemas/response.schema.json",
+  "$id": "https://raw.githubusercontent.com/realactivity/scout-remote/main/contracts/schemas/response.schema.json",
   "title": "Command response (responses/{commandId}.json)",
-  "description": "Bridge-to-mobile response. A completed response is immutable; later corrections are new events referencing the original command. Spec sections 7, 15.1, Appendix A.1.",
+  "description": "Bridge-to-mobile response. The first wire status is the bridge's prompt acknowledgement; the client-local draft and queued states never appear on the wire (spec Appendix A.1). A response in a terminal status is immutable; later corrections are new events referencing the original command. Spec sections 7, 15.1.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "commandId", "status"],
@@ -12,7 +12,6 @@
     "status": {
       "type": "string",
       "enum": [
-        "queued",
         "acknowledged",
         "running",
         "completed",
