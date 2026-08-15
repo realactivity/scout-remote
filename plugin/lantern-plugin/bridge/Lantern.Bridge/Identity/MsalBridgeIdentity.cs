@@ -1,18 +1,22 @@
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Extensions.Msal;
 
 namespace Lantern.Bridge.Identity;
 
 /// <summary>
-/// MSAL.NET public client. Silent first, then device-code or interactive when
-/// LANTERN_USE_DEVICE_CODE is set. The token cache is a user-only file next to
-/// the platform app-data directory, never under LANTERN_STATE_DIR.
+/// MSAL.NET public client. Silent first, then device-code by default or an
+/// interactive browser when explicitly configured. The token cache uses
+/// DPAPI, macOS Keychain, or Linux Keyring and never lands under
+/// LANTERN_STATE_DIR.
 /// </summary>
 public sealed class MsalBridgeIdentity : IBridgeIdentity
 {
     public static readonly string[] GraphScopes = ["Files.ReadWrite.AppFolder"];
 
     private readonly IPublicClientApplication _app;
+    private readonly MsalCacheHelper _cacheHelper;
     private readonly bool _useDeviceCode;
+    private readonly string? _tenantId;
 
     public MsalBridgeIdentity(string clientId, string? tenantId, string cacheDirectory, bool useDeviceCode)
     {
@@ -22,7 +26,6 @@ public sealed class MsalBridgeIdentity : IBridgeIdentity
         }
 
         Directory.CreateDirectory(cacheDirectory);
-        var cachePath = Path.Combine(cacheDirectory, "msal_cache.bin");
         var authority = string.IsNullOrWhiteSpace(tenantId)
             ? "https://login.microsoftonline.com/common"
             : $"https://login.microsoftonline.com/{tenantId}";
@@ -32,35 +35,41 @@ public sealed class MsalBridgeIdentity : IBridgeIdentity
             .WithAuthority(authority)
             .WithRedirectUri("http://localhost")
             .Build();
+        _tenantId = string.IsNullOrWhiteSpace(tenantId) || string.Equals(tenantId, "common", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : tenantId;
 
-        _app.UserTokenCache.SetBeforeAccess(args =>
+        var storage = new StorageCreationPropertiesBuilder("msal_cache.bin", cacheDirectory)
+            .WithLinuxKeyring(
+                schemaName: "dev.lantern.bridge.tokencache",
+                collection: MsalCacheHelper.LinuxKeyRingDefaultCollection,
+                secretLabel: "Lantern MSAL token cache",
+                attribute1: new KeyValuePair<string, string>("Version", "1"),
+                attribute2: new KeyValuePair<string, string>("Product", "Lantern"))
+            .WithMacKeyChain(
+                serviceName: "dev.lantern.bridge.tokencache",
+                accountName: clientId)
+            .Build();
+        try
         {
-            if (File.Exists(cachePath))
-            {
-                args.TokenCache.DeserializeMsalV3(File.ReadAllBytes(cachePath));
-            }
-        });
-        _app.UserTokenCache.SetAfterAccess(args =>
+            _cacheHelper = MsalCacheHelper.CreateAsync(storage).GetAwaiter().GetResult();
+            _cacheHelper.VerifyPersistence();
+            _cacheHelper.RegisterCache(_app.UserTokenCache);
+        }
+        catch (MsalCachePersistenceException error)
         {
-            if (!args.HasStateChanged)
-            {
-                return;
-            }
-
-            var bytes = args.TokenCache.SerializeMsalV3();
-            var tmp = cachePath + ".tmp";
-            File.WriteAllBytes(tmp, bytes);
-            File.Move(tmp, cachePath, overwrite: true);
-            TryRestrictPermissions(cachePath);
-        });
+            throw new InvalidOperationException(
+                "An OS-protected MSAL cache is unavailable. Configure DPAPI, macOS Keychain, "
+                + "or Linux Keyring before using the Graph backend.",
+                error);
+        }
 
         _useDeviceCode = useDeviceCode;
     }
 
     public async Task<string> AcquireGraphTokenAsync(CancellationToken cancellationToken = default)
     {
-        var accounts = await _app.GetAccountsAsync().ConfigureAwait(false);
-        var account = accounts.FirstOrDefault();
+        var account = await ResolveAccountAsync().ConfigureAwait(false);
         try
         {
             if (account is not null)
@@ -94,8 +103,7 @@ public sealed class MsalBridgeIdentity : IBridgeIdentity
 
     public async Task<BridgeAccount?> GetCurrentAccountAsync(CancellationToken cancellationToken = default)
     {
-        var accounts = await _app.GetAccountsAsync().ConfigureAwait(false);
-        var account = accounts.FirstOrDefault();
+        var account = await ResolveAccountAsync().ConfigureAwait(false);
         if (account is null)
         {
             return null;
@@ -107,6 +115,22 @@ public sealed class MsalBridgeIdentity : IBridgeIdentity
             TenantId: account.HomeAccountId.TenantId ?? "");
     }
 
+    private async Task<IAccount?> ResolveAccountAsync()
+    {
+        var accounts = (await _app.GetAccountsAsync().ConfigureAwait(false))
+            .Where(account => _tenantId is null
+                || string.Equals(account.HomeAccountId.TenantId, _tenantId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        return accounts.Count switch
+        {
+            0 => null,
+            1 => accounts[0],
+            _ => throw new InvalidOperationException(
+                "Multiple cached Microsoft 365 accounts match the configured tenant. "
+                + "Clear the Lantern MSAL cache and sign in with one account."),
+        };
+    }
+
     internal static string DefaultCacheDirectory()
     {
         var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -116,22 +140,5 @@ public sealed class MsalBridgeIdentity : IBridgeIdentity
         }
 
         return Path.Combine(root, "lantern", "msal");
-    }
-
-    private static void TryRestrictPermissions(string path)
-    {
-        try
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                return;
-            }
-
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        }
-        catch (Exception)
-        {
-            // Best effort. The cache still lives outside the protocol tree.
-        }
     }
 }

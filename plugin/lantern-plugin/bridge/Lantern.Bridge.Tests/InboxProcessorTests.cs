@@ -62,6 +62,89 @@ public sealed class InboxProcessorTests
     }
 
     [Fact]
+    public async Task ExistingAcknowledgementIsNotExecutedAgain()
+    {
+        using var env = new BridgeHarness();
+        var command = ValidCommand(env.Now, text: "once");
+        await env.WriteInbox(command);
+        var acknowledgement = await env.Bridge.WriteAcknowledgementAsync(command.CommandId);
+
+        var duplicate = await env.Bridge.WriteAcknowledgementAsync(command.CommandId);
+        var result = await env.Bridge.ProcessOnceAsync();
+
+        Assert.Equal(CommandStatus.Acknowledged, duplicate.Status);
+        Assert.Equal(acknowledgement.StartedUtc, duplicate.StartedUtc);
+        Assert.Equal(0, result.Executed);
+        Assert.Null(await env.Store.GetAsync(ProtocolPaths.Receipt(command.CommandId)));
+    }
+
+    [Fact]
+    public async Task TerminalResponseWithoutReceiptRepairsReceiptAndSkipsExecution()
+    {
+        using var env = new BridgeHarness();
+        var command = ValidCommand(env.Now, text: "once");
+        await env.WriteInbox(command);
+        await env.Bridge.WriteAcknowledgementAsync(command.CommandId);
+        var terminal = new RemoteResponse
+        {
+            SchemaVersion = 1,
+            CommandId = command.CommandId,
+            Status = CommandStatus.Completed,
+            StartedUtc = env.Now,
+            CompletedUtc = env.Now,
+            Message = "already completed",
+        };
+        await env.Bridge.WriteResponseAsync(terminal);
+
+        var result = await env.Bridge.ProcessOnceAsync();
+        await env.Bridge.WriteResponseAsync(terminal);
+
+        Assert.Equal(0, result.Executed);
+        Assert.NotNull(await env.Store.GetAsync(ProtocolPaths.Receipt(command.CommandId)));
+        Assert.Equal("already completed", (await env.ReadResponse(command.CommandId))!.Message);
+    }
+
+    [Fact]
+    public async Task FilenameMustMatchCommandId()
+    {
+        using var env = new BridgeHarness();
+        var command = ValidCommand(env.Now, text: "mismatch");
+        var json = JsonSerializer.Serialize(command, ProtocolJson.Options);
+        await env.Store.WriteAsync(
+            "commands/inbox/01KZYMGHG0NPD8AF5A96MP2YFA.json",
+            Encoding.UTF8.GetBytes(json));
+
+        var result = await env.Bridge.ProcessOnceAsync();
+        var activity = await env.Bridge.ReadActivityAsync(null);
+
+        Assert.Equal(0, result.Executed);
+        Assert.Contains(activity, item => item.Summary.Contains("command-id-mismatch"));
+        Assert.Null(await env.ReadResponse(command.CommandId));
+    }
+
+    [Fact]
+    public async Task IncompatibleProtocolStopsInboxProcessing()
+    {
+        using var env = new BridgeHarness();
+        var incompatible = new ProtocolManifest
+        {
+            Protocol = "lantern",
+            Version = "2.0",
+            AgentId = "primary",
+            BridgeVersion = "2.0.0",
+            Capabilities = [],
+        };
+        await env.Store.WriteAsync(
+            ProtocolPaths.Protocol,
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(incompatible, ProtocolJson.Options)));
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => env.Bridge.ReadInboxAsync());
+
+        Assert.Contains("Incompatible protocol.json", error.Message);
+    }
+
+    [Fact]
     public async Task UnknownFieldAndSchemaInvalidAreRejectedWithAuditEvent()
     {
         using var env = new BridgeHarness();
@@ -104,6 +187,38 @@ public sealed class InboxProcessorTests
         await env.Bridge.ProcessOnceAsync();
         var hits = SecretsScanner.Find(env.Approot);
         Assert.Empty(hits);
+    }
+
+    [Fact]
+    public async Task ReadActivityWalksUtcDayFoldersAndHonorsSinceUtc()
+    {
+        using var env = new BridgeHarness();
+        var older = new ActivityEvent
+        {
+            SchemaVersion = 1,
+            EventId = "01KZYMGHG0NPD8AF5A96MP2YFA",
+            Category = ActivityCategory.Work,
+            OccurredUtc = env.Now.AddDays(-1),
+            Summary = "older",
+        };
+        var newer = new ActivityEvent
+        {
+            SchemaVersion = 1,
+            EventId = "01KZYMGHG0NPD8AF5A96MP2YFB",
+            Category = ActivityCategory.Work,
+            OccurredUtc = env.Now,
+            Summary = "newer",
+        };
+        await env.Store.WriteAsync(
+            ProtocolPaths.ActivityEvent(older.OccurredUtc, older.EventId),
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(older, ProtocolJson.Options)));
+        await env.Store.WriteAsync(
+            ProtocolPaths.ActivityEvent(newer.OccurredUtc, newer.EventId),
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newer, ProtocolJson.Options)));
+
+        var events = await env.Bridge.ReadActivityAsync(env.Now.AddHours(-1));
+
+        Assert.Equal([newer.EventId], events.Select(item => item.EventId));
     }
 
     private static RemoteCommand ValidCommand(DateTimeOffset now, string text, int expiresHours = 4) =>

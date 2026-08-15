@@ -3,6 +3,25 @@
 Notable changes to the `lantern-bridge` plugin. Versioning follows SemVer,
 as recommended by Agent Plugins 1.0.0 §10.2.
 
+## [0.2.1] (2026-08-15)
+
+### Security
+
+- Use platform-protected, cross-process MSAL caches (DPAPI, macOS Keychain,
+  or Linux Keyring). The Graph backend fails closed when protected storage is
+  unavailable.
+- Validate the protocol major before processing and bind inbox filenames to
+  their command IDs.
+- Fail closed when a command already has a response, and repair a missing
+  receipt from an immutable terminal response instead of re-executing work.
+
+### Fixed
+
+- Recreate Graph HTTP request bodies on every 429/503 retry and send
+  `If-None-Match` as a request header.
+- Bound retry delays and activity lookback, make local state writes atomic,
+  and add Graph retry regression tests.
+
 ## [0.2.0] (2026-08-15)
 
 ### Added

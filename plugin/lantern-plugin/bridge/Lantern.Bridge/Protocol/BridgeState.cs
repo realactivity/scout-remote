@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Lantern.Bridge.Protocol;
 
@@ -9,6 +11,7 @@ namespace Lantern.Bridge.Protocol;
 public sealed class BridgeState
 {
     private readonly string _root;
+    private readonly Lock _gate = new();
 
     public BridgeState(string root)
     {
@@ -38,8 +41,13 @@ public sealed class BridgeState
         return Path.Combine(appData, "lantern", "state");
     }
 
-    public bool HasReceipt(string commandId) =>
-        File.Exists(ReceiptPath(commandId));
+    public bool HasReceipt(string commandId)
+    {
+        lock (_gate)
+        {
+            return File.Exists(ReceiptPath(commandId));
+        }
+    }
 
     public void WriteReceiptMirror(string commandId, string disposition, DateTimeOffset processedUtc)
     {
@@ -49,7 +57,10 @@ public sealed class BridgeState
             ["disposition"] = disposition,
             ["processedUtc"] = processedUtc.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
         });
-        File.WriteAllText(ReceiptPath(commandId), payload);
+        lock (_gate)
+        {
+            AtomicWrite(ReceiptPath(commandId), payload);
+        }
     }
 
     public void AppendJournal(string commandId, string step, DateTimeOffset utc)
@@ -61,7 +72,10 @@ public sealed class BridgeState
             ["step"] = step,
         });
         var path = Path.Combine(_root, "diagnostics", "journal.jsonl");
-        File.AppendAllText(path, line + Environment.NewLine);
+        lock (_gate)
+        {
+            File.AppendAllText(path, line + Environment.NewLine);
+        }
     }
 
     public IReadOnlyList<JournalEntry> ReadJournal()
@@ -72,8 +86,14 @@ public sealed class BridgeState
             return [];
         }
 
+        string[] lines;
+        lock (_gate)
+        {
+            lines = File.ReadAllLines(path);
+        }
+
         var entries = new List<JournalEntry>();
-        foreach (var line in File.ReadAllLines(path))
+        foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line))
             {
@@ -93,14 +113,40 @@ public sealed class BridgeState
     public string? ReadDeltaCursor()
     {
         var path = Path.Combine(_root, "delta-cursor.txt");
-        return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
+        lock (_gate)
+        {
+            return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
+        }
     }
 
-    public void WriteDeltaCursor(string cursor) =>
-        File.WriteAllText(Path.Combine(_root, "delta-cursor.txt"), cursor);
+    public void WriteDeltaCursor(string cursor)
+    {
+        lock (_gate)
+        {
+            AtomicWrite(Path.Combine(_root, "delta-cursor.txt"), cursor);
+        }
+    }
 
-    private string ReceiptPath(string commandId) =>
-        Path.Combine(_root, "receipts", commandId + ".json");
+    private static void AtomicWrite(string path, string content)
+    {
+        var temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            File.WriteAllText(temp, content);
+            File.Move(temp, path, overwrite: true);
+        }
+        finally
+        {
+            File.Delete(temp);
+        }
+    }
+
+    private string ReceiptPath(string commandId)
+    {
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(commandId)))
+            .ToLowerInvariant();
+        return Path.Combine(_root, "receipts", key + ".json");
+    }
 }
 
 public sealed record JournalEntry(string Utc, string CommandId, string Step);

@@ -95,9 +95,9 @@ static IBridgeIdentity CreateIdentity(string backend)
 
     var clientId = Environment.GetEnvironmentVariable("LANTERN_CLIENT_ID") ?? "";
     var tenantId = Environment.GetEnvironmentVariable("LANTERN_TENANT_ID");
-    var useDeviceCode = string.Equals(
+    var useDeviceCode = !string.Equals(
         Environment.GetEnvironmentVariable("LANTERN_USE_DEVICE_CODE"),
-        "1",
+        "0",
         StringComparison.Ordinal);
     return new MsalBridgeIdentity(clientId, tenantId, MsalBridgeIdentity.DefaultCacheDirectory(), useDeviceCode);
 }

@@ -36,6 +36,9 @@ public sealed class FilesystemStoreTests
         using var dir = new TempDir();
         var store = new FilesystemAppFolderStore(dir.Path);
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.GetAsync("../secret.json"));
+        var sibling = System.IO.Path.GetFileName(dir.Path) + "-sibling";
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => store.GetAsync($"../{sibling}/secret.json"));
     }
 
     [Fact]

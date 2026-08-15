@@ -173,7 +173,10 @@ public sealed class FilesystemAppFolderStore : IAppFolderStore
     {
         var rel = Normalize(path).Replace('/', Path.DirectorySeparatorChar);
         var full = Path.GetFullPath(Path.Combine(_root, rel));
-        if (!full.StartsWith(_root, StringComparison.Ordinal))
+        var relative = Path.GetRelativePath(_root, full);
+        if (relative == ".."
+            || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            || Path.IsPathRooted(relative))
         {
             throw new InvalidOperationException($"Path escapes App Folder root: {path}");
         }

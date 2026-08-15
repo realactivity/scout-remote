@@ -13,7 +13,7 @@ namespace Lantern.Bridge.Services;
 /// </summary>
 public sealed class BridgeService
 {
-    public const string BridgeVersion = "0.2.0";
+    public const string BridgeVersion = "0.2.1";
     public const int SchemaVersion = 1;
 
     private static readonly string[] Capabilities =
@@ -55,6 +55,16 @@ public sealed class BridgeService
         var existing = await _store.GetAsync(ProtocolPaths.Protocol, cancellationToken).ConfigureAwait(false);
         if (existing?.Content is { Length: > 0 })
         {
+            var json = Encoding.UTF8.GetString(existing.Content);
+            var current = JsonSerializer.Deserialize<ProtocolManifest>(json, ProtocolJson.Options)
+                ?? throw new InvalidOperationException("protocol.json could not be deserialized.");
+            if (!current.IsCompatible)
+            {
+                throw new InvalidOperationException(
+                    $"Incompatible protocol.json: expected {ProtocolManifest.ProtocolName} major "
+                    + $"{ProtocolManifest.SupportedMajorVersion}, got {current.Protocol} {current.Version}.");
+            }
+
             return;
         }
 
@@ -130,8 +140,34 @@ public sealed class BridgeService
                 continue;
             }
 
+            if (!string.Equals(fileName, command.CommandId, StringComparison.Ordinal))
+            {
+                await RejectAsync(
+                    fileName,
+                    "command-id-mismatch",
+                    $"filename {fileName} does not match commandId {command.CommandId}",
+                    cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
             if (await IsReceiptedAsync(command.CommandId, cancellationToken).ConfigureAwait(false))
             {
+                continue;
+            }
+
+            var existingResponse = await ReadResponseAsync(command.CommandId, cancellationToken).ConfigureAwait(false);
+            if (existingResponse is not null)
+            {
+                if (IsTerminal(existingResponse.Status))
+                {
+                    await RecordProcessedReceiptAsync(
+                        command.CommandId,
+                        DispositionFor(existingResponse.Status),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                // A response proves the command was already picked up. Fail closed:
+                // never re-execute work after a crash between acknowledgement and receipt.
                 continue;
             }
 
@@ -149,6 +185,12 @@ public sealed class BridgeService
 
     public async Task<RemoteResponse> WriteAcknowledgementAsync(string commandId, CancellationToken cancellationToken = default)
     {
+        var existing = await ReadResponseAsync(commandId, cancellationToken).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            return existing;
+        }
+
         if (await IsReceiptedAsync(commandId, cancellationToken).ConfigureAwait(false))
         {
             throw new InvalidOperationException($"Command {commandId} is already receipted.");
@@ -205,7 +247,8 @@ public sealed class BridgeService
     public async Task<IReadOnlyList<ActivityEvent>> ReadActivityAsync(DateTimeOffset? sinceUtc, CancellationToken cancellationToken = default)
     {
         var events = new List<ActivityEvent>();
-        foreach (var path in await ActivityPathsAsync(sinceUtc, cancellationToken).ConfigureAwait(false))
+        var effectiveSince = sinceUtc ?? _clock().AddDays(-30);
+        foreach (var path in await ActivityPathsAsync(effectiveSince, cancellationToken).ConfigureAwait(false))
         {
             var file = await _store.GetAsync(path, cancellationToken).ConfigureAwait(false);
             if (file?.Content is null)
@@ -228,7 +271,7 @@ public sealed class BridgeService
                 continue;
             }
 
-            if (sinceUtc is { } since && parsed.OccurredUtc < since)
+            if (parsed.OccurredUtc < effectiveSince)
             {
                 continue;
             }
@@ -239,19 +282,10 @@ public sealed class BridgeService
         return events.OrderBy(e => e.EventId, StringComparer.Ordinal).ToList();
     }
 
-    private async Task<IReadOnlyList<string>> ActivityPathsAsync(DateTimeOffset? sinceUtc, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> ActivityPathsAsync(DateTimeOffset sinceUtc, CancellationToken cancellationToken)
     {
-        if (sinceUtc is null)
-        {
-            var listed = await _store.ListAsync(ProtocolPaths.Activity, cancellationToken).ConfigureAwait(false);
-            return listed
-                .Where(i => i.Path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                .Select(i => i.Path)
-                .ToList();
-        }
-
         var paths = new List<string>();
-        var start = DateOnly.FromDateTime(sinceUtc.Value.UtcDateTime);
+        var start = DateOnly.FromDateTime(sinceUtc.UtcDateTime);
         var end = DateOnly.FromDateTime(_clock().UtcDateTime);
         for (var day = start; day <= end; day = day.AddDays(1))
         {
@@ -452,6 +486,14 @@ public sealed class BridgeService
                 ProtocolJson.Options);
             if (current is not null && IsTerminal(current.Status))
             {
+                if (string.Equals(
+                    JsonSerializer.Serialize(current, ProtocolJson.Options),
+                    json,
+                    StringComparison.Ordinal))
+                {
+                    return;
+                }
+
                 throw new InvalidOperationException(
                     $"Response {response.CommandId} is terminal ({current.Status}) and immutable.");
             }
@@ -461,7 +503,11 @@ public sealed class BridgeService
             return;
         }
 
-        await _store.WriteAsync(path, Encoding.UTF8.GetBytes(json), cancellationToken).ConfigureAwait(false);
+        if (await _store.CreateIfAbsentAsync(path, Encoding.UTF8.GetBytes(json), cancellationToken).ConfigureAwait(false) is null)
+        {
+            throw new InvalidOperationException(
+                $"Response {response.CommandId} was created concurrently. Retry the operation.");
+        }
     }
 
     private async Task WriteValidatedAsync(string path, string schema, string json, CancellationToken cancellationToken)
@@ -486,6 +532,29 @@ public sealed class BridgeService
 
         return false;
     }
+
+    private async Task<RemoteResponse?> ReadResponseAsync(string commandId, CancellationToken cancellationToken)
+    {
+        var item = await _store.GetAsync(ProtocolPaths.Response(commandId), cancellationToken).ConfigureAwait(false);
+        if (item?.Content is null)
+        {
+            return null;
+        }
+
+        var json = Encoding.UTF8.GetString(item.Content);
+        return JsonSerializer.Deserialize<RemoteResponse>(json, ProtocolJson.Options)
+            ?? throw new InvalidOperationException($"Response {commandId} could not be deserialized.");
+    }
+
+    private static string DispositionFor(CommandStatus status) => status switch
+    {
+        CommandStatus.Completed => "completed",
+        CommandStatus.Failed => "failed",
+        CommandStatus.Expired => "expired",
+        CommandStatus.Canceled => "canceled",
+        CommandStatus.WaitingForDesktopApproval => "waiting_for_desktop_approval",
+        _ => "interrupted",
+    };
 
     private static bool IsTerminal(CommandStatus status) =>
         status is CommandStatus.Completed

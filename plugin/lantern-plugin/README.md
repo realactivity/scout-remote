@@ -70,7 +70,8 @@ supported mechanisms.
    users need only the .NET runtime).
 
    ```bash
-   dotnet publish bridge/Lantern.Bridge -c Release -o bridge/publish
+   dotnet restore bridge/Lantern.Bridge --locked-mode
+   dotnet publish bridge/Lantern.Bridge -c Release --no-restore -o bridge/publish
    ```
 
 2. **Install the skill.** Place `skills/lantern-bridge/` (including
@@ -86,7 +87,9 @@ supported mechanisms.
    app-data directory when `LANTERN_STATE_DIR` is unset or unexpanded.
 4. **Sign in once.** The bridge establishes its own MSAL cache (same Entra app
    ID and Microsoft 365 user as the mobile app, its **own** token cache).
-   Tokens are never copied between devices.
+   Tokens are never copied between devices. The cache requires DPAPI, macOS
+   Keychain, or Linux Keyring; the Graph backend fails closed when protected
+   storage is unavailable.
 5. **Enable the heartbeat/automation** with an acceptable cadence policy.
 
 The moment Scout ships as a compatible client, steps 2 and 3 collapse to
@@ -110,7 +113,7 @@ and `PLUGIN_DATA` provided. That loading contract is the entire standard.
 | `write_acknowledgement` | First wire status (`acknowledged`). |
 | `write_response` | Schema-validated write; terminal responses are immutable. |
 | `record_processed_receipt` | Exactly-once receipt. |
-| `read_activity` | Activity events by day folder, optional `sinceUtc`. |
+| `read_activity` | Activity events by day folder, optional `sinceUtc`; defaults to the 30-day retention window. |
 | `resolve_artifact` | Graph item lookup, or filesystem stand-in. |
 
 ```bash
@@ -127,6 +130,6 @@ dotnet plugin/lantern-plugin/bridge/publish/Lantern.Bridge.dll --once
 | `LANTERN_APPROOT` | Local directory laid out like the App Folder. Required for filesystem. |
 | `LANTERN_STATE_DIR` | Receipts mirror and diagnostics. Unset or unexpanded falls back to platform app-data. |
 | `LANTERN_CLIENT_ID` / `LANTERN_TENANT_ID` | Graph / MSAL only. |
-| `LANTERN_USE_DEVICE_CODE` | `1` for device-code sign-in on the Graph backend. |
+| `LANTERN_USE_DEVICE_CODE` | Device-code sign-in is the headless default. Set `0` only for an interactive desktop browser flow. |
 
 Phase 0 proof (automation vs tenant) is in [`docs/phase0-report.md`](../../docs/phase0-report.md).

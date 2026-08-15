@@ -16,14 +16,23 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     private readonly IBridgeIdentity _identity;
     private readonly HttpClient _http;
     private readonly int _maxRetries;
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay;
+    private readonly Func<DateTimeOffset> _clock;
     private string? _approotId;
     private string? _driveId;
 
-    public GraphAppFolderStore(IBridgeIdentity identity, HttpClient? http = null, int maxRetries = 4)
+    public GraphAppFolderStore(
+        IBridgeIdentity identity,
+        HttpClient? http = null,
+        int maxRetries = 4,
+        Func<TimeSpan, CancellationToken, Task>? delay = null,
+        Func<DateTimeOffset>? clock = null)
     {
         _identity = identity;
-        _http = http ?? new HttpClient();
+        _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         _maxRetries = maxRetries;
+        _delay = delay ?? ((wait, cancellationToken) => Task.Delay(wait, cancellationToken));
+        _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
     public async Task<StoredItem?> GetAsync(string path, CancellationToken cancellationToken = default)
@@ -34,6 +43,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             ItemByPathUri(path) + ":/content",
             null,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -75,8 +85,9 @@ public sealed class GraphAppFolderStore : IAppFolderStore
         using var response = await SendAsync(
             HttpMethod.Put,
             ItemByPathUri(path) + ":/content",
-            new ByteArrayContent(content),
+            content,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var meta = await ParseItemAsync(response, path, content).ConfigureAwait(false);
@@ -92,13 +103,12 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             return null;
         }
 
-        using var requestContent = new ByteArrayContent(content);
-        requestContent.Headers.TryAddWithoutValidation("If-None-Match", "*");
         using var response = await SendAsync(
             HttpMethod.Put,
             ItemByPathUri(path) + ":/content?@microsoft.graph.conflictBehavior=fail",
-            requestContent,
+            content,
             null,
+            true,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode is HttpStatusCode.Conflict or HttpStatusCode.PreconditionFailed)
         {
@@ -112,12 +122,12 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     public async Task<StoredItem> UpdateIfMatchAsync(string path, byte[] content, string etag, CancellationToken cancellationToken = default)
     {
         await EnsureApprootAsync(cancellationToken).ConfigureAwait(false);
-        using var requestContent = new ByteArrayContent(content);
         using var response = await SendAsync(
             HttpMethod.Put,
             ItemByPathUri(path) + ":/content",
-            requestContent,
+            content,
             etag,
+            false,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.PreconditionFailed)
         {
@@ -137,6 +147,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             ItemByPathUri(path),
             null,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -152,7 +163,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
         var uri = string.IsNullOrWhiteSpace(cursor)
             ? $"{GraphRoot}/drives/{_driveId}/items/{_approotId}/delta"
             : cursor;
-        using var response = await SendAsync(HttpMethod.Get, uri, null, null, cancellationToken).ConfigureAwait(false);
+        using var response = await SendAsync(HttpMethod.Get, uri, null, null, false, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
         var items = new List<StoredItem>();
@@ -194,6 +205,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             $"{GraphRoot}/drives/{_driveId}/items/{Uri.EscapeDataString(driveItemId)}",
             null,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -223,6 +235,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             $"{GraphRoot}/me/drive/special/approot",
             null,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
@@ -251,6 +264,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
                 $"{GraphRoot}/me/drive",
                 null,
                 null,
+                false,
                 cancellationToken).ConfigureAwait(false);
             driveResponse.EnsureSuccessStatusCode();
             using var driveDoc = JsonDocument.Parse(await driveResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
@@ -261,7 +275,8 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     private string ItemByPathUri(string path)
     {
         var rel = Normalize(path);
-        return $"{GraphRoot}/drives/{_driveId}/items/{_approotId}:/{rel}";
+        var escaped = string.Join('/', rel.Split('/').Select(Uri.EscapeDataString));
+        return $"{GraphRoot}/drives/{_driveId}/items/{_approotId}:/{escaped}";
     }
 
     private async Task<StoredItem?> GetMetadataAsync(string path, CancellationToken cancellationToken)
@@ -271,6 +286,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             ItemByPathUri(path),
             null,
             null,
+            false,
             cancellationToken).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
@@ -289,7 +305,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
         var next = uri;
         while (!string.IsNullOrEmpty(next))
         {
-            using var response = await SendAsync(HttpMethod.Get, next, null, null, cancellationToken).ConfigureAwait(false);
+            using var response = await SendAsync(HttpMethod.Get, next, null, null, false, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
             if (doc.RootElement.TryGetProperty("value", out var value))
@@ -325,8 +341,9 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     private async Task<HttpResponseMessage> SendAsync(
         HttpMethod method,
         string uri,
-        HttpContent? content,
+        byte[]? content,
         string? ifMatch,
+        bool ifNoneMatch,
         CancellationToken cancellationToken)
     {
         for (var attempt = 0; ; attempt++)
@@ -339,9 +356,14 @@ public sealed class GraphAppFolderStore : IAppFolderStore
                 request.Headers.TryAddWithoutValidation("If-Match", QuoteEtag(ifMatch));
             }
 
+            if (ifNoneMatch)
+            {
+                request.Headers.TryAddWithoutValidation("If-None-Match", "*");
+            }
+
             if (content is not null)
             {
-                request.Content = content;
+                request.Content = new ByteArrayContent(content);
             }
 
             var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -357,15 +379,21 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             }
             else if (response.Headers.RetryAfter?.Date is { } date)
             {
-                delay = date - DateTimeOffset.UtcNow;
+                delay = date - _clock();
                 if (delay < TimeSpan.Zero)
                 {
                     delay = TimeSpan.FromSeconds(1);
                 }
             }
 
+            delay = delay < TimeSpan.FromSeconds(1)
+                ? TimeSpan.FromSeconds(1)
+                : delay > TimeSpan.FromSeconds(30)
+                    ? TimeSpan.FromSeconds(30)
+                    : delay;
+
             response.Dispose();
-            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+            await _delay(delay, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -423,8 +451,18 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     private static string QuoteEtag(string etag) =>
         etag.StartsWith('"') ? etag : $"\"{etag}\"";
 
-    private static string Normalize(string path) =>
-        path.Replace('\\', '/').TrimStart('/');
+    private static string Normalize(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        var normalized = path.Replace('\\', '/').TrimStart('/');
+        var segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Any(segment => segment is "." or ".." || segment.Contains('\0')))
+        {
+            throw new ArgumentException($"Invalid App Folder path: {path}", nameof(path));
+        }
+
+        return string.Join('/', segments);
+    }
 
     private static string ETagFallback(byte[] content) =>
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(content)).ToLowerInvariant();
