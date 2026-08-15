@@ -117,6 +117,7 @@ class CrossLanguageSmokeTest {
                 null,
             )
             runBridge(dll, approot, state)
+            sync.refreshForeground()
             val activity = transport.readActivity(kotlinx.datetime.Instant.parse("2020-01-01T00:00:00Z"))
             assertTrue(activity.any { it.summary.contains("rejected") })
             assertEquals(CommandStatus.FAILED, transport.readResponse(inject.commandId)?.status)
