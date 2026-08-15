@@ -6,7 +6,9 @@ namespace ScoutRemote.Transport.Graph;
 /// <summary>
 /// IBridgeTransport over the OneDrive App Folder (/me/drive/special/approot), spec §6 and §16.2.
 /// Implementation notes for Phase 0:
-///  - ETags/If-Match for mutable files (status, settings); immutable IDs for commands/responses.
+///  - ETags/If-Match for mutable files: status, settings, and in-flight responses (a response
+///    file is updated through acknowledged/running and becomes immutable only at a terminal
+///    status, spec §15.1). Commands and conversation/activity events are immutable once written.
 ///  - Store driveItem IDs and delta cursors; never re-list the whole app folder per refresh.
 ///  - Validate protocol.json (schema + major version) before touching any other file.
 ///  - Enqueue uses create-if-absent semantics keyed on CommandId so retries cannot duplicate.
