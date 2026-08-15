@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1420" font-family="'Space Grotesk','Segoe UI',Inter,Roboto,sans-serif">
+  <rect width="900" height="1420" fill="#0D1826"/>
+
+  <!-- HERO: app icon -->
+  <rect x="362" y="64" width="176" height="176" rx="42" fill="#16273B" stroke="#26384F" stroke-width="2"/>
+  <g transform="translate(380,88) scale(1.4)">
+    <circle cx="50" cy="50" r="34" fill="#FFC96B" opacity="0.16"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#FFC96B"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+
+  <text x="450" y="330" text-anchor="middle" font-size="88" font-weight="700" letter-spacing="-2" fill="#EDE6D6">lantern</text>
+  <text x="450" y="378" text-anchor="middle" font-size="26" font-weight="600" fill="#FFC96B">Signals, not vibes.</text>
+  <text x="450" y="410" text-anchor="middle" font-size="17" fill="#7C8794">A mobile companion for Microsoft Scout</text>
+
+  <line x1="120" y1="452" x2="780" y2="452" stroke="#223247" stroke-width="1"/>
+
+  <!-- STATUS SYSTEM -->
+  <text x="120" y="494" font-size="13" letter-spacing="3" fill="#6E7B8C">THE PANE IS THE STATUS</text>
+
+  <!-- Idle -->
+  <rect x="120" y="516" width="150" height="190" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(156,550) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#4CAF7D" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#4CAF7D"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="195" y="666" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Idle</text>
+  <text x="195" y="688" text-anchor="middle" font-size="12" fill="#7C8794">last seen 2m</text>
+
+  <!-- Working -->
+  <rect x="290" y="516" width="150" height="190" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(326,550) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#5B9BD9" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#5B9BD9"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="365" y="666" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Working</text>
+  <text x="365" y="688" text-anchor="middle" font-size="12" fill="#7C8794">3 of 5 sources</text>
+
+  <!-- Needs desktop -->
+  <rect x="460" y="516" width="150" height="190" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(496,550) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#E8961E" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#E8961E"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="535" y="666" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Needs desktop</text>
+  <text x="535" y="688" text-anchor="middle" font-size="12" fill="#7C8794">approve locally</text>
+
+  <!-- Offline / stale -->
+  <rect x="630" y="516" width="150" height="190" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(666,550) scale(0.78)">
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#7C8794" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#7C8794"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#7C8794" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#33404F"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#7C8794"/>
+  </g>
+  <text x="705" y="666" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Offline / stale</text>
+  <text x="705" y="688" text-anchor="middle" font-size="12" fill="#7C8794">last seen 6h</text>
+
+  <line x1="120" y1="742" x2="780" y2="742" stroke="#223247" stroke-width="1"/>
+
+  <!-- LOCKUP -->
+  <text x="120" y="782" font-size="13" letter-spacing="3" fill="#6E7B8C">LOCKUP</text>
+  <rect x="120" y="800" width="56" height="56" rx="14" fill="#16273B" stroke="#26384F"/>
+  <g transform="translate(127,809) scale(0.42)">
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="7" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="7"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#FFC96B"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="196" y="842" font-size="40" font-weight="700" letter-spacing="-1" fill="#EDE6D6">lantern</text>
+  <text x="352" y="840" font-size="18" fill="#7C8794">for Microsoft Scout</text>
+  <text x="120" y="888" font-size="12" fill="#6E7B8C">Store listing uses the nominative "for Microsoft Scout" pattern. Verify against Microsoft trademark guidelines.</text>
+
+  <line x1="120" y1="920" x2="780" y2="920" stroke="#223247" stroke-width="1"/>
+
+  <!-- PALETTE -->
+  <text x="120" y="960" font-size="13" letter-spacing="3" fill="#6E7B8C">PALETTE</text>
+  <rect x="120" y="980" width="150" height="76" rx="12" fill="#0D1826" stroke="#2A3B52"/>
+  <rect x="290" y="980" width="150" height="76" rx="12" fill="#16273B"/>
+  <rect x="460" y="980" width="150" height="76" rx="12" fill="#EDE6D6"/>
+  <rect x="630" y="980" width="150" height="76" rx="12" fill="#FFC96B"/>
+  <text x="120" y="1080" font-size="13" font-weight="600" fill="#EDE6D6">Midnight</text>
+  <text x="120" y="1098" font-size="12" fill="#7C8794">#0D1826</text>
+  <text x="290" y="1080" font-size="13" font-weight="600" fill="#EDE6D6">Steeple</text>
+  <text x="290" y="1098" font-size="12" fill="#7C8794">#16273B</text>
+  <text x="460" y="1080" font-size="13" font-weight="600" fill="#EDE6D6">Bone</text>
+  <text x="460" y="1098" font-size="12" fill="#7C8794">#EDE6D6</text>
+  <text x="630" y="1080" font-size="13" font-weight="600" fill="#EDE6D6">Candle</text>
+  <text x="630" y="1098" font-size="12" fill="#7C8794">#FFC96B</text>
+
+  <circle cx="130" cy="1136" r="10" fill="#4CAF7D"/>
+  <text x="148" y="1141" font-size="12" fill="#7C8794">Idle #4CAF7D</text>
+  <circle cx="272" cy="1136" r="10" fill="#5B9BD9"/>
+  <text x="290" y="1141" font-size="12" fill="#7C8794">Working #5B9BD9</text>
+  <circle cx="432" cy="1136" r="10" fill="#E8961E"/>
+  <text x="450" y="1141" font-size="12" fill="#7C8794">Waiting #E8961E</text>
+  <circle cx="586" cy="1136" r="10" fill="#7C8794"/>
+  <text x="604" y="1141" font-size="12" fill="#7C8794">Offline #7C8794</text>
+  <circle cx="722" cy="1136" r="10" fill="#E05252"/>
+  <text x="740" y="1141" font-size="12" fill="#7C8794">Error #E05252</text>
+
+  <line x1="120" y1="1176" x2="780" y2="1176" stroke="#223247" stroke-width="1"/>
+
+  <!-- TYPE -->
+  <text x="120" y="1216" font-size="13" letter-spacing="3" fill="#6E7B8C">TYPE</text>
+  <text x="120" y="1256" font-size="30" font-weight="700" fill="#EDE6D6">Space Grotesk</text>
+  <text x="360" y="1256" font-size="14" fill="#7C8794">display and wordmark</text>
+  <text x="120" y="1292" font-size="16" fill="#B9C2CE">Roboto Flex · product UI, native on Android</text>
+  <text x="120" y="1324" font-size="14" fill="#FFC96B" font-family="'IBM Plex Mono','Cascadia Code',Consolas,monospace">last_seen 2026-08-14T02:32:10Z · IBM Plex Mono for evidence</text>
+
+  <line x1="120" y1="1356" x2="780" y2="1356" stroke="#223247" stroke-width="1"/>
+  <text x="120" y="1388" font-size="12" fill="#6E7B8C">lantern · lantern bridge (agent plugin) · protocol lantern/1.0</text>
+  <text x="780" y="1388" text-anchor="end" font-size="12" fill="#6E7B8C">Boston, 1775 · one if by land, two if by sea</text>
+</svg>
