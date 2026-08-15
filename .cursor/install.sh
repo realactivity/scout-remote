@@ -24,7 +24,7 @@ else
 fi
 
 echo "==> Restoring and building the .NET solution"
-dotnet build ScoutRemote.sln -c Release
+dotnet build Lantern.sln -c Release
 
 echo "==> Warming the Kotlin/Gradle toolchain and building :core"
 ( cd src/mobile && ./gradlew :core:build --no-daemon )
