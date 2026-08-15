@@ -27,7 +27,8 @@ where noted, the forward plan.
 |---|---|
 | [`lantern-brand-sheet.svg`](lantern-brand-sheet.svg) | Authoritative brand sheet for the **lantern** mobile client (colors, status system, typography, iconography). |
 | [`brand-guidelines.md`](brand-guidelines.md) | Human brand and UX spec: color system, the "pane is the status" mapping to the protocol state model, typography, and a Compose adherence checklist. |
-| [`brand-tokens.json`](brand-tokens.json) | Machine-readable brand tokens extracted from the brand sheet; the source the Android Compose theme should consume. |
+| [`brand-tokens.json`](brand-tokens.json) | Machine-readable brand tokens extracted from the brand sheet; the source the Android Compose theme consumes. |
+| [`phase0-report.md`](phase0-report.md) | Phase 0 spike: what automation proves vs what remains human-gated. |
 
 ## Conventions
 

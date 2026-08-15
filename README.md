@@ -14,8 +14,9 @@ Apollo for Reddit, Ivory for Mastodon): a distinct product name with "for Micros
 Scout" as a descriptor, verified against Microsoft's trademark guidelines. Brand and
 UX specs are in [`docs/brand-guidelines.md`](docs/brand-guidelines.md).
 
-> **Status** Accepted reference architecture (spec v2.0, 15 August 2026).
-> Pre-implementation scaffolding.
+> **Status** Phase 0 Android spike implemented (spec v2.0, 15 August 2026).
+> Offline end-to-end is proven in CI. Tenant validation is human-gated
+> ([`docs/phase0-report.md`](docs/phase0-report.md)).
 >
 > **Authoritative design** [`docs/design-spec-v2.0.md`](docs/design-spec-v2.0.md).
 > The v1.2 pair ([markdown](docs/design-spec-v1.2.md),
@@ -116,7 +117,7 @@ lantern/
 │       ├── core/                  Pure Kotlin/JVM. No Android APIs. Domain models,
 │       │                          ports, platform interfaces, golden-file contract tests
 │       └── app/                   Android client (Compose and MSAL).
-│                                  Bootstrapped at Phase 0. iOS in Phase 4.
+│                                  Phase 0 Home + brand theme. iOS in Phase 4.
 ├── plugin/
 │   └── lantern-plugin/            Desktop bridge. Agent Plugins 1.0.0 package.
 │       ├── plugin.json            Identity and metadata (SPDX license field)
@@ -125,7 +126,10 @@ lantern/
 │       ├── LICENSE                MIT (travels with the package)
 │       ├── skills/lantern-bridge/
 │       └── bridge/Lantern.Bridge/
-├── .github/workflows/ci.yml       CI: contracts validation, .NET + Kotlin builds/tests
+├── scripts/
+│   ├── smoke-e2e/                 Cross-language harness (CI)
+│   └── smoke-tenant/              Real Graph kit (human-gated, NEVER-COMMIT .local/)
+├── .github/workflows/ci.yml       CI: contracts, .NET, Kotlin, Android, e2e, MCP smoke
 ├── global.json                    .NET SDK pin (10.0, latestFeature) + MTP test runner
 ├── Lantern.sln
 └── LICENSE                        MIT
@@ -171,16 +175,25 @@ Requires the .NET 10 SDK (pinned by `global.json`) and JDK 17+. CI runs the
 same three checks on every pull request.
 
 ```bash
-# .NET: bridge protocol model + golden-file contract tests
+# .NET: domain + bridge + MCP smoke
 dotnet build Lantern.sln -c Release
 dotnet test --solution Lantern.sln -c Release --no-build
 
-# Kotlin: mobile core module + golden-file contract tests
+# Kotlin: mobile core + unit tests
 ( cd src/mobile && ./gradlew :core:build )
+
+# Android app (no emulator)
+( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
+
+# Cross-language e2e (Kotlin client + Lantern.Bridge --once)
+scripts/smoke-e2e/run.sh
 
 # Contracts: validate the golden examples against the JSON Schemas
 python3 contracts/validate_examples.py   # pip install jsonschema
 ```
+
+See [`docs/phase0-report.md`](docs/phase0-report.md) for the Phase 0 evidence
+map. The real-tenant kit is [`scripts/smoke-tenant/README.md`](scripts/smoke-tenant/README.md).
 
 `./.cursor/install.sh` bootstraps a fresh machine (installs the .NET SDK if
 missing, then builds both toolchains). It is idempotent.

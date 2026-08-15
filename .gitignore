@@ -21,6 +21,8 @@ build/
 !debug.keystore
 .gradle/
 local.properties
+src/mobile/app/src/main/assets/brand-tokens.json
+src/mobile/app/src/test/resources/brand-tokens.json
 
 # iOS (Phase 4)
 *.ipa
@@ -36,3 +38,4 @@ xcuserdata/
 *.snk
 appsettings.local.json
 msal_cache*
+scripts/smoke-tenant/.local/
