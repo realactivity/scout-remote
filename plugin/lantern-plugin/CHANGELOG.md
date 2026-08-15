@@ -18,3 +18,5 @@ as recommended by Agent Plugins 1.0.0 §10.2.
   quick reference starts at `acknowledged` (`draft`/`queued` are client-local
   states), and daily usage aggregates live at
   `telemetry/usage/{yyyy-MM-dd}.json`.
+- MIT license: standard-layout `LICENSE` at the plugin root plus the matching
+  SPDX `license` field in `plugin.json`.

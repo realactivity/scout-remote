@@ -169,3 +169,9 @@ reasoning is retained in
 mobile APIs, the domain-level interfaces (status, activity, remote command,
 response, artifact, usage) stay put. Swap the transport adapter. Do not rewrite
 the app.
+
+## License
+
+[MIT](LICENSE). The plugin package carries its own copy of the license plus the
+matching SPDX `license` field in its manifest, so it stays licensed when
+distributed separately.
