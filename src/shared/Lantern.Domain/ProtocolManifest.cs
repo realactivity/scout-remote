@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Lantern.Domain;
 
 /// <summary>
@@ -19,6 +21,7 @@ public sealed record ProtocolManifest
     public bool NativeScoutChatMirror { get; init; }
     public bool RemoteApprovals { get; init; }
 
+    [JsonIgnore]
     public bool IsCompatible =>
         Protocol == ProtocolName &&
         int.TryParse(Version.Split('.')[0], out var major) &&

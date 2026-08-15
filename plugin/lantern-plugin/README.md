@@ -100,3 +100,33 @@ and `PLUGIN_DATA` provided. That loading contract is the entire standard.
 |---|---|
 | `SKILL.md` and `references/` | When to poll, how to interpret *validated* bridge state, response formatting, when to stop and ask for desktop attention. Enforces the no-remote-approvals and prompt-injection rules at the orchestration layer. |
 | `Lantern.Bridge` (MCP) | Desktop MSAL sign-in, Graph App Folder I/O, schema and version checks, idempotency receipts, protocol serialization, state under `LANTERN_STATE_DIR`. Deterministic. Returns no secrets to Scout. |
+
+## Bridge tools and harness
+
+| Tool | Behavior |
+|---|---|
+| `publish_status` | Writes `agents/{agentId}/status.json` with `lastSeenUtc`. |
+| `read_inbox` | Returns only schema-valid, unexpired, unreceipted commands. Invalid files get an audit event. |
+| `write_acknowledgement` | First wire status (`acknowledged`). |
+| `write_response` | Schema-validated write; terminal responses are immutable. |
+| `record_processed_receipt` | Exactly-once receipt. |
+| `read_activity` | Activity events, optional `sinceUtc`. |
+| `resolve_artifact` | Graph item lookup, or filesystem stand-in. |
+
+```bash
+# Offline inbox processor (CI / local harness)
+LANTERN_BACKEND=filesystem \
+LANTERN_APPROOT=/tmp/lantern-approot \
+LANTERN_STATE_DIR=/tmp/lantern-state \
+dotnet plugin/lantern-plugin/bridge/publish/Lantern.Bridge.dll --once
+```
+
+| Variable | Meaning |
+|---|---|
+| `LANTERN_BACKEND` | `filesystem` or `graph`. Inferred as filesystem when `LANTERN_APPROOT` is set. |
+| `LANTERN_APPROOT` | Local directory laid out like the App Folder. Required for filesystem. |
+| `LANTERN_STATE_DIR` | Receipts mirror and diagnostics. Unset or unexpanded falls back to platform app-data. |
+| `LANTERN_CLIENT_ID` / `LANTERN_TENANT_ID` | Graph / MSAL only. |
+| `LANTERN_USE_DEVICE_CODE` | `1` for device-code sign-in on the Graph backend. |
+
+Phase 0 proof (automation vs tenant) is in [`docs/phase0-report.md`](../../docs/phase0-report.md).

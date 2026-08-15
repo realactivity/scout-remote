@@ -6,6 +6,13 @@
   <ItemGroup>
     <ProjectReference Include="../../../../src/shared/Lantern.Domain/Lantern.Domain.csproj" />
   </ItemGroup>
-  <!-- Phase 0: add MCP server SDK, Microsoft.Identity.Client (broker-enabled), and
-       Microsoft.Graph PackageReferences once the Entra registration exists. -->
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" Version="9.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.87.0" />
+    <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../../../contracts/schemas/*.json" LogicalName="Lantern.Bridge.schemas.%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Description>Filesystem store, inbox gate, --once processor, and MCP stdio smoke tests for Lantern.Bridge.</Description>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Lantern.Bridge/Lantern.Bridge.csproj" />
+    <ProjectReference Include="../../../../src/shared/Lantern.Domain/Lantern.Domain.csproj" />
+  </ItemGroup>
+</Project>

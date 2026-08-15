@@ -3,6 +3,22 @@
 Notable changes to the `lantern-bridge` plugin. Versioning follows SemVer,
 as recommended by Agent Plugins 1.0.0 §10.2.
 
+## [0.2.0] (2026-08-15)
+
+### Added
+
+- Stdio MCP server (`ModelContextProtocol` 2.2.0) with deterministic tools:
+  `publish_status`, `read_inbox`, `write_acknowledgement`, `write_response`,
+  `record_processed_receipt`, `read_activity`, `resolve_artifact`.
+- App Folder storage port: filesystem harness (CI) and Graph REST backend
+  (`/me/drive/special/approot`, If-Match, Retry-After).
+- Strict inbox gate: schema-invalid, unknown-field, expired, and already
+  receipted commands are never executed. Prompt-injection text is refused
+  and audited.
+- `--once` harness mode for the cross-language smoke test.
+- State under `LANTERN_STATE_DIR` (receipts mirror, journal, delta cursor).
+  MSAL caches stay in a separate user-only directory.
+
 ## [0.1.0] (2026-08-15)
 
 ### Added
