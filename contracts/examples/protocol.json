@@ -1,0 +1,15 @@
+{
+  "protocol": "scout-remote",
+  "version": "1.0",
+  "agentId": "primary",
+  "bridgeVersion": "1.0.0",
+  "capabilities": [
+    "status.read",
+    "activity.read",
+    "message.send",
+    "summary.request",
+    "artifacts.read"
+  ],
+  "nativeScoutChatMirror": false,
+  "remoteApprovals": false
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/agent-status.schema.json",
+  "title": "Agent status snapshot (agents/{agentId}/status.json)",
+  "description": "Latest bridge-published agent status. Presence staleness is derived by the client from lastSeenUtc; never show online without freshness evidence. Spec sections 6.2, 15.1, Appendix A.2.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "agentId", "state", "lastSeenUtc"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "agentId": { "type": "string", "minLength": 1 },
+    "state": {
+      "type": "string",
+      "enum": ["unknown", "idle", "working", "waiting_for_desktop"]
+    },
+    "lastSeenUtc": { "type": "string", "format": "date-time" },
+    "currentTask": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string" },
+        "startedUtc": { "type": "string", "format": "date-time" },
+        "progressText": { "type": "string" }
+      }
+    },
+    "attention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "commandId": "01J5R9Q8C5R0E6Y2M4P7K2P9AP",
+  "status": "completed",
+  "startedUtc": "2026-08-13T22:45:01Z",
+  "completedUtc": "2026-08-13T22:46:14Z",
+  "message": "Architecture review is complete. Two follow-ups remain.",
+  "artifacts": [
+    { "name": "architecture-review.docx", "driveItemId": "EXAMPLE-DRIVE-ITEM-ID" }
+  ],
+  "usage": { "workIqCalls": 0, "modelTokens": null }
+}
