@@ -1,8 +1,14 @@
-# Scout Remote
+# Lantern
 
-A secure mobile companion for Microsoft Scout. Check what Scout is doing, review
-bridge-owned chats and activity, send bounded instructions, view artifacts, and
-understand usage, without depending on undocumented Scout internals.
+**Signals, not vibes.** A secure mobile companion for Microsoft Scout. Check what
+Scout is doing, review bridge-owned chats and activity, send bounded instructions,
+view artifacts, and understand usage, without depending on undocumented Scout
+internals.
+
+Lantern ships as **"Lantern for Microsoft Scout"** — the nominative pattern (like
+Apollo for Reddit, Ivory for Mastodon): a distinct product name with "for Microsoft
+Scout" as a descriptor, verified against Microsoft's trademark guidelines. Brand and
+UX specs are in [`docs/brand-guidelines.md`](docs/brand-guidelines.md).
 
 > **Status** Proposed reference architecture (spec v1.2, 14 August 2026).
 > Pre-implementation scaffolding.
@@ -12,7 +18,7 @@ understand usage, without depending on undocumented Scout internals.
 
 ## Product boundary
 
-Scout Remote is a **companion to the documented Windows/macOS Scout desktop
+Lantern is a **companion to the documented Windows/macOS Scout desktop
 application**, not a replacement for it, and not a native Scout runtime on
 mobile. The design deliberately does **not** assume
 
@@ -77,7 +83,7 @@ Key decisions are in spec §1 and §3 to §7.
 |---|---|
 | Identity | **One** Entra public-client app registration shared by mobile and desktop bridge. Each client signs in independently with MSAL and keeps its own OS-protected token cache. **Tokens are never transferred between devices.** |
 | Data plane | Microsoft Graph and the OneDrive **App Folder** (`Files.ReadWrite.AppFolder`). User-owned, least-privilege, cross-device. Both clients resolve the same `/me/drive/special/approot`. |
-| Desktop bridge | A **conformant Agent Plugins 1.0.0** bundle, validated against the official schemas. See [`plugin/scout-remote-plugin/README.md`](plugin/scout-remote-plugin/README.md). A Scout `SKILL.md` handles orchestration. A **local MCP bridge/helper** owns Graph authentication and protocol I/O. |
+| Desktop bridge | A **conformant Agent Plugins 1.0.0** bundle, validated against the official schemas. See [`plugin/lantern-plugin/README.md`](plugin/lantern-plugin/README.md). A Scout `SKILL.md` handles orchestration. A **local MCP bridge/helper** owns Graph authentication and protocol I/O. |
 | Chat model | **Bridge-owned conversations.** Append-only event streams, reproducible from protocol data. Native Scout chat mirroring is an optional, feature-flagged future adapter. |
 | Command semantics | Every command has an ID, timestamp, **expiry**, status, and auditable result. At-least-once observation, exactly-once effect. Idempotency uses processed receipts. Expired, replayed, or malformed commands never execute. |
 | Safety | Sensitive work returns `waiting_for_desktop_approval`. There is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). No secrets ever land in OneDrive protocol JSON. |
@@ -87,14 +93,14 @@ Key decisions are in spec §1 and §3 to §7.
 ## Repository layout
 
 ```
-scout-remote/
+lantern/
 ├── docs/                             Reference architecture (spec v1.2, markdown and PDF)
 ├── contracts/                        Shared bridge-protocol contracts (JSON Schema and examples)
 │   ├── schemas/                      protocol, status, command, response, events, usage
 │   └── examples/                     Canonical payloads from the spec
 ├── src/
 │   ├── shared/
-│   │   └── ScoutRemote.Domain/       Bridge-side .NET protocol model
+│   │   └── Lantern.Domain/       Bridge-side .NET protocol model
 │   └── mobile/                       Kotlin Gradle project
 │       ├── core/                     Pure Kotlin/JVM. No Android APIs.
 │       │                             Domain models, ports, platform interfaces,
@@ -102,13 +108,13 @@ scout-remote/
 │       └── app/                      Android client (Compose and MSAL).
 │                                     Bootstrapped at Phase 0. iOS in Phase 4.
 ├── plugin/
-│   └── scout-remote-plugin/          Desktop bridge. Agent Plugins 1.0.0 package.
+│   └── lantern-plugin/          Desktop bridge. Agent Plugins 1.0.0 package.
 │       ├── plugin.json               Identity and metadata
 │       ├── mcp.json                  Typed stdio MCP server
 │       ├── CHANGELOG.md              SemVer history
-│       ├── skills/scout-remote-bridge/
-│       └── bridge/ScoutRemote.Bridge/
-└── ScoutRemote.sln
+│       ├── skills/lantern-bridge/
+│       └── bridge/Lantern.Bridge/
+└── Lantern.sln
 ```
 
 ## Getting started (Phase 0 spike)

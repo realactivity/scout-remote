@@ -12,8 +12,8 @@ framework an implementation detail behind the contracts and domain interfaces.
 ## Decision
 
 The mobile client is built with **Kotlin and Jetpack Compose**, not .NET MAUI.
-The desktop bridge stays on .NET (`ScoutRemote.Domain` and
-`ScoutRemote.Bridge`), where MSAL.NET with Windows broker support is the right
+The desktop bridge stays on .NET (`Lantern.Domain` and
+`Lantern.Bridge`), where MSAL.NET with Windows broker support is the right
 tool. The versioned JSON contracts in [`../contracts/`](../contracts/), not
 shared code, are the boundary between the two languages. Golden-file contract
 tests enforce that boundary on both sides.
@@ -56,9 +56,9 @@ tests enforce that boundary on both sides.
 - The Android `app` module (Compose UI, MSAL Android, Keystore/WorkManager/
   notification implementations of the `core` interfaces) is bootstrapped at the
   start of Phase 0. See [`../src/mobile/app/README.md`](../src/mobile/app/README.md).
-- The mobile-side C# projects (`ScoutRemote.Application`,
-  `ScoutRemote.Transport.Graph`, `ScoutRemote.Platform.Abstractions`) are
-  removed. `ScoutRemote.Domain` remains as the **bridge-side** protocol model.
+- The mobile-side C# projects (`Lantern.Application`,
+  `Lantern.Transport.Graph`, `Lantern.Platform.Abstractions`) are
+  removed. `Lantern.Domain` remains as the **bridge-side** protocol model.
   The Kotlin `core` domain package mirrors it against the same schemas, and
   both run golden-file contract tests over `contracts/examples/`.
 - **iOS (Phase 4)** becomes either a Kotlin Multiplatform migration of `core`

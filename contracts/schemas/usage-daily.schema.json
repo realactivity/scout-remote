@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://scout-remote.dev/schemas/usage-daily.schema.json",
+  "$id": "https://lantern.dev/schemas/usage-daily.schema.json",
   "title": "Daily usage aggregate (telemetry/usage-daily.json)",
   "description": "Illustrative usage/cost aggregate. Never authoritative vendor billing data. Never contains tokens, prompts, or credentials. Spec section 13.",
   "type": "object",

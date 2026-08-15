@@ -1,6 +1,6 @@
 <Project>
-  <!-- .NET here serves the desktop bridge only. ScoutRemote.Domain (protocol model)
-       and ScoutRemote.Bridge (MCP helper host). The mobile client is Kotlin. See
+  <!-- .NET here serves the desktop bridge only. Lantern.Domain (protocol model)
+       and Lantern.Bridge (MCP helper host). The mobile client is Kotlin. See
        src/mobile and docs/mobile-framework-kotlin.md. -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>

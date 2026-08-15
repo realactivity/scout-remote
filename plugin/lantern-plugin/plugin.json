@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "lantern-bridge",
+  "version": "0.1.0",
+  "description": "Lantern desktop bridge: a Scout skill plus a local stdio MCP bridge that connects Scout to the Lantern mobile companion through the OneDrive App Folder protocol.",
+  "author": {
+    "name": "Lantern project"
+  },
+  "homepage": "https://github.com/realactivity/scout-remote",
+  "repository": "https://github.com/realactivity/scout-remote",
+  "keywords": ["scout", "mcp", "agent-skills", "onedrive", "microsoft-graph", "mobile-companion"]
+}

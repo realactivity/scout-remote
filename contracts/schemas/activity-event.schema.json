@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://scout-remote.dev/schemas/activity-event.schema.json",
+  "$id": "https://lantern.dev/schemas/activity-event.schema.json",
   "title": "Activity event (activity/{yyyy-MM-dd}/{eventId}.json)",
   "description": "Chronological bridge activity event, grouped by day. Immutable once written. Categories match the Activity screen filters (spec section 9). Activity text may reveal work context. Treat it as potentially confidential (spec 11.1). It must never contain secrets.",
   "type": "object",

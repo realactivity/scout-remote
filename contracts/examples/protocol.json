@@ -1,5 +1,5 @@
 {
-  "protocol": "scout-remote",
+  "protocol": "lantern",
   "version": "1.0",
   "agentId": "primary",
   "bridgeVersion": "1.0.0",

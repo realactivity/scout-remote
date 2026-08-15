@@ -1,4 +1,4 @@
-# Scout Remote — Mobile Companion for Microsoft Scout
+# Lantern — Mobile Companion for Microsoft Scout
 
 **Product & Technical Design Specification**
 
@@ -13,7 +13,7 @@
 **Design intent.** A secure mobile control plane for checking Scout status, reviewing bridge-owned chats and activity, sending bounded instructions, viewing artifacts, and understanding usage — without depending on undocumented Scout internals.
 
 > **Important product boundary**
-> Scout Remote remains a companion to the documented Windows/macOS Scout desktop application. The design does not assume a public API for native Scout chat/session control. The stable contract is the app-owned bridge protocol, delivered through the Agent Plugin package and local MCP bridge/helper.
+> Lantern remains a companion to the documented Windows/macOS Scout desktop application. The design does not assume a public API for native Scout chat/session control. The stable contract is the app-owned bridge protocol, delivered through the Agent Plugin package and local MCP bridge/helper.
 
 > **Revision 1.2 — Android-first release**
 > Launch sequencing is now explicit: Phase 0 and Phase 1 target Android first, with Google Play packaging and Android-specific validation. iOS remains a planned Phase 4 target on the same shared domain, transport, identity, and platform-service abstractions; iOS-specific Entra configuration, Keychain storage, background behavior, and App Store work are deferred until that phase.
@@ -22,9 +22,9 @@
 
 ## 1. Executive summary
 
-Scout Remote is a companion experience, not a replacement for the Scout desktop client. The mobile app provides visibility and bounded remote interaction while preserving Scout's desktop approval and safety model. The first public mobile release targets Android; iOS follows on the same architecture.
+Lantern is a companion experience, not a replacement for the Scout desktop client. The mobile app provides visibility and bounded remote interaction while preserving Scout's desktop approval and safety model. The first public mobile release targets Android; iOS follows on the same architecture.
 
-**Recommended architecture.** Use one Scout Remote Microsoft Entra public-client app registration across mobile and desktop bridge clients. Mobile and desktop authenticate independently with MSAL and keep separate secure token caches. Microsoft Graph + the OneDrive App Folder is the durable cross-device data plane. Package the desktop bridge as an Agent Plugins 1.0 bundle containing a Scout skill and a local MCP bridge/helper; the helper owns Graph authentication and protocol I/O.
+**Recommended architecture.** Use one Lantern Microsoft Entra public-client app registration across mobile and desktop bridge clients. Mobile and desktop authenticate independently with MSAL and keep separate secure token caches. Microsoft Graph + the OneDrive App Folder is the durable cross-device data plane. Package the desktop bridge as an Agent Plugins 1.0 bundle containing a Scout skill and a local MCP bridge/helper; the helper owns Graph authentication and protocol I/O.
 
 - **Launch strategy:** Android first for the spike and MVP; iOS is a planned follow-on release using the same shared architecture and contracts.
 - **Primary use case:** check whether Scout is active, what it is working on, what it recently completed, and whether it needs desktop attention.
@@ -82,7 +82,7 @@ The design is grounded in Microsoft documentation available as of 14 August 2026
 | Scout is currently desktop-only on Windows 11+ and macOS 12+. | Mobile is a companion/remote surface, not a native Scout runtime. |
 | Scout supports heartbeat and scheduled/condition-triggered automations. | Bridge processing can occur without an interactive user turn. |
 | Scout supports custom SKILL.md skills. Scout admin policy also exposes MCP-server controls. | Use a skill for orchestration and a local MCP server/helper for deterministic bridge operations. |
-| Agent Plugins 1.0 packages Agent Skills and MCP servers in one portable directory. | Distribute Scout Remote Bridge as a plugin package; keep components installable separately. |
+| Agent Plugins 1.0 packages Agent Skills and MCP servers in one portable directory. | Distribute Lantern Bridge as a plugin package; keep components installable separately. |
 | Microsoft Graph exposes OneDrive App Folder access via `Files.ReadWrite.AppFolder`. | Both mobile and desktop bridge use the same Entra application ID and signed-in user to reach the same approot. |
 | MSAL supports native public-client authentication on mobile and desktop. | No client secret; each device/client maintains its own secure token cache. |
 
@@ -91,7 +91,7 @@ The design is grounded in Microsoft documentation available as of 14 August 2026
 
 ## 4. Logical architecture
 
-The architecture uses OneDrive as a durable mailbox/state store. The mobile app and Scout never need a direct network connection. The Android client and desktop bridge authenticate independently but share the same Scout Remote Entra application ID. The later iOS client plugs into the same app-facing contracts and data plane.
+The architecture uses OneDrive as a durable mailbox/state store. The mobile app and Scout never need a direct network connection. The Android client and desktop bridge authenticate independently but share the same Lantern Entra application ID. The later iOS client plugs into the same app-facing contracts and data plane.
 
 ```
 ┌───────────────────── Single-user Microsoft 365 trust boundary ─────────────────────┐
@@ -119,9 +119,9 @@ The architecture uses OneDrive as a durable mailbox/state store. The mobile app 
 
 | Component | Responsibilities |
 |---|---|
-| Scout Remote mobile app | Android is the first release target. Shared domain/transport/application code remains cross-platform; iOS later supplies platform-specific services behind the same interfaces. |
+| Lantern mobile app | Android is the first release target. Shared domain/transport/application code remains cross-platform; iOS later supplies platform-specific services behind the same interfaces. |
 | Microsoft Graph / OneDrive | Durable protocol storage and sync boundary. App Folder is addressed by the shared Entra application ID. |
-| Scout Remote Agent Plugin | Portable package containing the Scout skill plus local MCP bridge/helper. Plugin packaging is not assumed to be natively installable by Scout. |
+| Lantern Agent Plugin | Portable package containing the Scout skill plus local MCP bridge/helper. Plugin packaging is not assumed to be natively installable by Scout. |
 | Local MCP bridge/helper | Desktop MSAL sign-in; Graph App Folder access; protocol reads/writes; deterministic bridge operations. Keeps its own token cache. |
 | Scout skill + heartbeat/automation | Agent-facing orchestration and scheduled polling. Uses the MCP bridge for data-plane operations; Scout approvals remain local. |
 
@@ -165,7 +165,7 @@ approot/                          (/me/drive/special/approot)
 
 ```json
 {
-  "protocol": "scout-remote",
+  "protocol": "lantern",
   "version": "1.0",
   "agentId": "primary",
   "bridgeVersion": "1.0.0",
@@ -300,7 +300,7 @@ The app must distinguish between a stable remote conversation it owns and Micros
 
 ### 10.1 Mobile authentication
 
-- Register Scout Remote as a public client application in Microsoft Entra ID.
+- Register Lantern as a public client application in Microsoft Entra ID.
 - **Android MVP:** configure Android plus the required desktop/native redirect platforms first. Use MSAL authorization code flow with PKCE for Android sign-in.
 - Do not ship a client secret in the mobile binary.
 - Store the Android token cache through Keystore-backed secure storage behind a platform-neutral secure-storage abstraction.
@@ -319,7 +319,7 @@ The app must distinguish between a stable remote conversation it owns and Micros
 
 ### 10.3 Desktop bridge authentication
 
-- Reuse the same Scout Remote Entra application registration used by the Android client. Configure the required desktop/native redirect platform(s) on that public-client registration.
+- Reuse the same Lantern Entra application registration used by the Android client. Configure the required desktop/native redirect platform(s) on that public-client registration.
 - The local MCP bridge/helper signs the user in independently with MSAL and requests the same delegated Graph scope. It does not receive, import, copy, or refresh the mobile app's tokens.
 - Require the desktop bridge account to match the mobile-bound Microsoft 365 identity. Because both clients call Graph with the same app ID and user, `/me/drive/special/approot` resolves to the same application folder.
 - Persist the desktop MSAL cache in OS-protected storage. Try silent acquisition first; require interactive sign-in again when tenant policy or token state requires it.
@@ -347,7 +347,7 @@ The app must distinguish between a stable remote conversation it owns and Micros
 - **Artifacts:** keep as OneDrive items and reference by ID rather than duplicating large content into protocol JSON.
 - **Telemetry:** store counts and model/tool identifiers only when available; never store access tokens or full prompts just for cost accounting.
 
-## 12. Scout Remote Agent Plugin
+## 12. Lantern Agent Plugin
 
 Package the desktop bridge as an Agent Plugins 1.0 bundle so the reusable Scout skill and its local MCP bridge travel together. Agent Plugins 1.0 standardizes packaging for Agent Skills and MCP servers; it does not by itself make Scout a conformant plugin installer.
 
@@ -356,14 +356,14 @@ Package the desktop bridge as an Agent Plugins 1.0 bundle so the reusable Scout 
 Conceptual package layout:
 
 ```
-scout-remote-plugin/
+lantern-plugin/
 ├── plugin.json
 ├── skills/
-│   └── scout-remote-bridge/
+│   └── lantern-bridge/
 │       └── SKILL.md
 ├── mcp.json
 └── bridge/
-    └── ScoutRemote.Bridge
+    └── Lantern.Bridge
 ```
 
 | Plugin component | Responsibility |
@@ -431,7 +431,7 @@ Dynamics 365 is outside the core bridge. Add it only if the mobile experience ne
 | Work IQ | Optional for semantic synthesis, not required for basic D365 connectivity. |
 | Device-code prototype | Permissible as a temporary engineering workflow where appropriate; not the production mobile credential model. |
 
-> **Separation of concerns.** Keep D365 credentials and API logic in a D365 adapter. The Scout Remote bridge contract should refer to logical business requests/results, not expose or transport D365 access tokens.
+> **Separation of concerns.** Keep D365 credentials and API logic in a D365 adapter. The Lantern bridge contract should refer to logical business requests/results, not expose or transport D365 access tokens.
 
 ## 15. Reliability, offline behavior, and error handling
 
@@ -531,7 +531,7 @@ Keep the mobile app layered so the transport can change later if Microsoft relea
 
 - Create one Entra public-client app registration with Android and desktop/native redirect configuration; defer iOS platform configuration to Phase 4.
 - Build the Graph App Folder client and prove Android + desktop helper resolve the same approot for the same signed-in user.
-- Package Scout Remote Bridge as an Agent Plugins 1.0 directory with `plugin.json`, `skills/.../SKILL.md`, and `mcp.json`.
+- Package Lantern Bridge as an Agent Plugins 1.0 directory with `plugin.json`, `skills/.../SKILL.md`, and `mcp.json`.
 - Implement Android Keystore-backed secure storage, MSAL redirect handling, background scheduling behavior, notifications, encrypted local cache, offline drafts, and idempotent retry behind platform-service interfaces.
 - Implement Home + Activity + Chats + Artifacts + Settings and add usage counters.
 - Create a signed Android release package suitable for Google Play internal/closed testing.
@@ -555,11 +555,11 @@ Keep the mobile app layered so the transport can change later if Microsoft relea
 ### 21.1 First-time setup — Android MVP
 
 1. Install/configure Scout on the desktop and confirm Microsoft 365 sign-in.
-2. Register Scout Remote as one Entra public-client application. Configure Android and desktop/native platform redirects for the MVP; leave iOS platform configuration for Phase 4.
-3. Install the Scout Remote Agent Plugin source package. Until Scout documents native Agent Plugins installation, place the contained SKILL.md in a supported Scout skills directory and register the contained local MCP bridge with Scout.
-4. Run the desktop bridge sign-in once. Confirm it uses the Scout Remote app ID, signs in as the intended Microsoft 365 user, and stores its MSAL cache only in OS-protected local storage.
+2. Register Lantern as one Entra public-client application. Configure Android and desktop/native platform redirects for the MVP; leave iOS platform configuration for Phase 4.
+3. Install the Lantern Agent Plugin source package. Until Scout documents native Agent Plugins installation, place the contained SKILL.md in a supported Scout skills directory and register the contained local MCP bridge with Scout.
+4. Run the desktop bridge sign-in once. Confirm it uses the Lantern app ID, signs in as the intended Microsoft 365 user, and stores its MSAL cache only in OS-protected local storage.
 5. Create/enable the bridge heartbeat or automation and set an acceptable work-hours/cadence policy.
-6. Install the Android Scout Remote build and sign in with the same Microsoft 365 identity. Confirm Android uses Keystore-backed secure storage through the platform abstraction.
+6. Install the Android Lantern build and sign in with the same Microsoft 365 identity. Confirm Android uses Keystore-backed secure storage through the platform abstraction.
 7. From Android and desktop, resolve `/me/drive/special/approot` and verify both clients see the same protocol bootstrap.
 8. Run "Request fresh status" from Android and confirm a complete round trip. For release candidates, repeat after app restart, device reboot, Scout-offline recovery, and account re-authentication.
 
