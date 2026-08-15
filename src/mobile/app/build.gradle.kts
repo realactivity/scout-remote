@@ -15,8 +15,8 @@ android {
         applicationId = "dev.lantern.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.1"
+        versionCode = 3
+        versionName = "0.3.0"
         buildConfigField("String", "LANTERN_CLIENT_ID", "\"${System.getenv("LANTERN_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "LANTERN_TENANT_ID", "\"${System.getenv("LANTERN_TENANT_ID") ?: ""}\"")
     }
@@ -67,4 +67,6 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation(kotlin("test"))
+    testImplementation("androidx.test:core:1.7.0")
+    testImplementation("org.robolectric:robolectric:4.16.1")
 }

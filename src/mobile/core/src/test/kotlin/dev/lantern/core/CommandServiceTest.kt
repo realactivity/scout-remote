@@ -13,6 +13,10 @@ import dev.lantern.core.domain.ConversationEvent
 import dev.lantern.core.domain.ProtocolManifest
 import dev.lantern.core.domain.RemoteCommand
 import dev.lantern.core.domain.RemoteResponse
+import dev.lantern.core.metrics.InMemoryLanternMetrics
+import dev.lantern.core.metrics.MetricGauge
+import dev.lantern.core.metrics.MetricOperation
+import dev.lantern.core.metrics.MetricResult
 import dev.lantern.core.storage.FilesystemAppFolderStore
 import dev.lantern.core.transport.GraphBridgeTransport
 import dev.lantern.core.ulid.Ulid
@@ -102,12 +106,14 @@ class CommandServiceTest {
     fun `offline send remains durable and flushes after reconnect`() = runBlocking {
         val queue = InMemoryCommandQueue()
         val transport = FlakyTransport()
+        val metrics = InMemoryLanternMetrics()
         val service = CommandServiceImpl(
             transport = transport,
             queue = queue,
             clock = InstantClock { now },
             requester = { CommandRequester("00000000-0000-0000-0000-000000000000") },
             ulid = { "01KZYMGHG0NPD8AF5A96MP2YFW" },
+            metrics = metrics,
         )
 
         val command = service.send(CommandType.MESSAGE, "remote-test", "offline", null)
@@ -117,6 +123,10 @@ class CommandServiceTest {
         transport.available = true
         assertEquals(1, service.flushPending())
         assertEquals(listOf(command.commandId), transport.enqueued.map { it.commandId })
+        assertEquals(MetricOperation.COMMAND_ENQUEUE, metrics.operations.first().operation)
+        assertEquals(MetricResult.OFFLINE_QUEUED, metrics.operations.first().result)
+        assertEquals(MetricOperation.COMMAND_FLUSH, metrics.operations.last().operation)
+        assertEquals(MetricGauge.UNEXPIRED_COMMAND_CACHE_ENTRIES, metrics.gauges.last().gauge)
     }
 
     private class FlakyTransport : BridgeTransport {

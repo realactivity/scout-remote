@@ -17,6 +17,8 @@ in [docs/mobile-framework-kotlin.md](../../../docs/mobile-framework-kotlin.md).
 | `BackgroundScheduler` / `NotificationService` | Honest stubs: they record the request, they do not pretend work ran |
 | `IdentityService` | Honest scaffold; no Graph token is acquired in the Phase 0 debug build |
 | Local mailbox | Filesystem App Folder under the app files dir (harness). Graph is human-gated. |
+| Sync index | SQLite metadata/cursors with payload bytes in Keystore-backed storage |
+| Runtime metrics | Content-free operation, duration, retry, cache-count, and sync-age records in Logcat |
 
 ```bash
 ( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )

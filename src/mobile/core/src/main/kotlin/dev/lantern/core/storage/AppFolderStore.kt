@@ -8,6 +8,24 @@ package dev.lantern.core.storage
 interface AppFolderStore {
     suspend fun get(path: String): StoredItem?
 
+    suspend fun read(path: String, knownEtag: String? = null): StoreReadResult {
+        val item = get(path) ?: return StoreReadResult.Missing
+        return if (knownEtag != null && item.etag == knownEtag) {
+            StoreReadResult.NotModified
+        } else {
+            StoreReadResult.Found(item)
+        }
+    }
+
+    suspend fun readByItemId(itemId: String, knownEtag: String? = null): StoreReadResult {
+        val metadata = list("").firstOrNull { it.itemId == itemId }
+            ?: return StoreReadResult.Missing
+        if (knownEtag != null && metadata.etag == knownEtag) {
+            return StoreReadResult.NotModified
+        }
+        return read(metadata.path, knownEtag = null)
+    }
+
     suspend fun list(prefix: String): List<StoredItem>
 
     suspend fun write(path: String, content: ByteArray): StoredItem
@@ -23,6 +41,12 @@ interface AppFolderStore {
     suspend fun delete(path: String)
 
     suspend fun listDelta(cursor: String?): DeltaPage
+}
+
+sealed interface StoreReadResult {
+    data class Found(val item: StoredItem) : StoreReadResult
+    data object NotModified : StoreReadResult
+    data object Missing : StoreReadResult
 }
 
 data class StoredItem(
@@ -55,6 +79,14 @@ data class StoredItem(
 data class DeltaPage(
     val items: List<StoredItem>,
     val cursor: String?,
+    val deletions: List<DeletedItem> = emptyList(),
+    val reset: Boolean = false,
+    val completeSnapshot: Boolean = false,
+)
+
+data class DeletedItem(
+    val itemId: String,
+    val path: String?,
 )
 
 class ETagConflictException(

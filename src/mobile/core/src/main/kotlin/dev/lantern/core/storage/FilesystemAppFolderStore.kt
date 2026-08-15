@@ -39,6 +39,26 @@ class FilesystemAppFolderStore(root: Path) : AppFolderStore {
         }
     }
 
+    override suspend fun read(path: String, knownEtag: String?): StoreReadResult = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val full = map(path)
+            if (!full.exists() || !full.isRegularFile()) {
+                StoreReadResult.Missing
+            } else {
+                val bytes = Files.readAllBytes(full)
+                val etag = etagOf(bytes)
+                if (knownEtag != null && etag == knownEtag) {
+                    StoreReadResult.NotModified
+                } else {
+                    StoreReadResult.Found(toItem(path, full, bytes))
+                }
+            }
+        }
+    }
+
+    override suspend fun readByItemId(itemId: String, knownEtag: String?): StoreReadResult =
+        read(itemId, knownEtag)
+
     override suspend fun list(prefix: String): List<StoredItem> = mutex.withLock {
         withContext(Dispatchers.IO) {
             val prefixNorm = normalize(prefix)
@@ -109,14 +129,12 @@ class FilesystemAppFolderStore(root: Path) : AppFolderStore {
             val items = mutableListOf<StoredItem>()
             for (file in enumerateFiles()) {
                 val ticks = file.getLastModifiedTime().toMillis()
-                if (ticks > since) {
-                    items += toItem(relative(file), file, content = null)
-                }
+                items += toItem(relative(file), file, content = null)
                 if (ticks > max) {
                     max = ticks
                 }
             }
-            DeltaPage(items, max.toString())
+            DeltaPage(items, max.toString(), completeSnapshot = true)
         }
     }
 
