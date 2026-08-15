@@ -2,8 +2,11 @@
   <!-- .NET here serves the desktop bridge only. Lantern.Domain (protocol model)
        and Lantern.Bridge (MCP helper host). The mobile client is Kotlin. See
        src/mobile and docs/mobile-framework-kotlin.md. -->
+  <!-- Single source of truth for the .NET version. Policy: track the latest stable
+       LTS/STS release (currently .NET 10 LTS, supported to November 2028); never
+       ship on previews. -->
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

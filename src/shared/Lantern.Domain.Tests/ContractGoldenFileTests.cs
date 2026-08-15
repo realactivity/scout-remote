@@ -37,7 +37,7 @@ public sealed class ContractGoldenFileTests
         var firstEncoded = JsonSerializer.Serialize(first, Json);
         var second = JsonSerializer.Deserialize<T>(firstEncoded, Json)!;
         var secondEncoded = JsonSerializer.Serialize(second, Json);
-        Assert.True(firstEncoded == secondEncoded, $"round trip of {name} must be lossless");
+        Assert.Equal(firstEncoded, secondEncoded);
         return first;
     }
 

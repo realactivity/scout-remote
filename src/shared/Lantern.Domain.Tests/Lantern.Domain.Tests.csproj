@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- xunit v3 test projects are executables running on Microsoft.Testing.Platform
+         (the modern .NET 10 test experience; opted in via dotnet.config at the repo
+         root). No VSTest adapter packages are needed. -->
+    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <Description>Golden-file contract tests: the bridge-side domain model must round-trip the canonical payloads in contracts/examples losslessly (the Kotlin core module runs the same fixtures; contracts/README.md rule 5).</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Lantern.Domain/Lantern.Domain.csproj" />
