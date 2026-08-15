@@ -22,7 +22,7 @@ Launch sequencing is explicit in v1.2:
 
 - **Phase 0 (spike) and Phase 1 (MVP) target Android only** — Entra public-client registration configured for Android + desktop redirects, Keystore-backed secure storage, Android background scheduling, notifications, MSAL redirect handling, and Google Play internal/closed-test packaging.
 - **iOS is Phase 4**, on the same shared domain, transport, identity, and platform-service abstractions. iOS-specific Entra configuration, Keychain storage, background behavior, and App Store work are deferred until that phase — they do not block the Android MVP.
-- The guardrail that keeps this honest: **shared domain, application-service, transport, and protocol code stays free of Android-only APIs.** Platform specifics live behind interfaces (`ISecureStorage`, `IBackgroundScheduler`, `INotificationService`, …) so iOS is an implementation-and-testing phase, not an architectural rewrite.
+- The guardrail that keeps this honest: **shared domain, application-service, transport, and protocol code stays free of Android-only APIs.** It lives in the pure-JVM Kotlin `core` module; platform specifics implement its interfaces (`SecureStorage`, `BackgroundScheduler`, `NotificationService`, …) in the Android `app` module, so iOS is an implementation-and-testing phase, not an architectural rewrite.
 
 ## Architecture summary
 
@@ -53,7 +53,7 @@ Key decisions (see spec §1 and §3–§7 for full rationale):
 | Chat model | **Bridge-owned conversations** — append-only event streams reproducible from protocol data. Native Scout chat mirroring is an optional, feature-flagged future adapter. |
 | Command semantics | Every command has an ID, timestamp, **expiry**, status, and auditable result. At-least-once observation, exactly-once effect: idempotency via processed receipts; expired/replayed/malformed commands never execute. |
 | Safety | Sensitive work returns `waiting_for_desktop_approval` — there is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). No secrets ever land in OneDrive protocol JSON. |
-| Mobile framework | .NET MAUI reference implementation (React Native acceptable), layered so the Graph transport can be swapped for a native Scout API adapter if Microsoft ships one. |
+| Mobile framework | **Kotlin + Jetpack Compose** (supersedes the spec's MAUI recommendation — see [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md)); layered so the Graph transport can be swapped for a native Scout API adapter if Microsoft ships one. The desktop bridge stays on .NET; the `contracts/` schemas are the language-neutral boundary. |
 | Deployment | Mode A (personal, no backend) for MVP; optional notification service (Mode B) and enterprise brokering (Mode C) later. |
 
 ## Repository layout
@@ -65,13 +65,14 @@ scout-remote/
 │   ├── schemas/                      protocol / status / command / response / conversation-event / activity-event / usage schemas
 │   └── examples/                     Canonical payloads from the spec
 ├── src/
-│   ├── shared/                       Cross-platform .NET libraries — NO Android/iOS APIs allowed here
-│   │   ├── ScoutRemote.Domain/                 Domain model: AgentStatus, RemoteCommand, RemoteResponse, …
-│   │   ├── ScoutRemote.Application/            App services + ports: IBridgeTransport, ICommandService, sync
-│   │   ├── ScoutRemote.Transport.Graph/        Graph App Folder transport adapter (GraphBridgeTransport)
-│   │   └── ScoutRemote.Platform.Abstractions/  ISecureStorage, IBackgroundScheduler, INotificationService, …
-│   └── mobile/
-│       └── ScoutRemote.App/          .NET MAUI client — Android target first; iOS heads added in Phase 4
+│   ├── shared/
+│   │   └── ScoutRemote.Domain/       Bridge-side .NET protocol model (serializes contracts/ schemas)
+│   └── mobile/                       Kotlin Gradle project (framework decision: docs/mobile-framework-kotlin.md)
+│       ├── core/                     Pure Kotlin/JVM — NO Android APIs: domain models, ports
+│       │                             (BridgeTransport, CommandService, …), platform interfaces,
+│       │                             golden-file contract tests against contracts/examples
+│       └── app/                      Android client (Compose + MSAL) — bootstrapped at Phase 0;
+│                                     iOS follows in Phase 4 against the same core + contracts
 ├── plugin/
 │   └── scout-remote-plugin/          Desktop bridge as an Agent Plugins 1.0 package
 │       ├── plugin.json               Package identity (Agent Plugins 1.0 manifest)
@@ -93,7 +94,7 @@ Build-time validation comes first — Scout is a Frontier product and Agent Plug
 
 The full first-time setup checklist and troubleshooting order are in the spec's operational runbook (§21).
 
-Accepted refinements on top of the spec are recorded in [`docs/architecture-improvements.md`](docs/architecture-improvements.md): adaptive foreground polling for in-flight commands (Phase 1), content-free Mode B push notifications when interactive use grows, and validating the `Files.ReadWrite.AppFolder` tenant assumption in week one of Phase 0 — before any feature code.
+Accepted refinements on top of the spec are recorded in [`docs/architecture-improvements.md`](docs/architecture-improvements.md): adaptive foreground polling for in-flight commands (Phase 1), content-free Mode B push notifications when interactive use grows, and validating the `Files.ReadWrite.AppFolder` tenant assumption in week one of Phase 0 — before any feature code. The mobile client is built with Kotlin + Jetpack Compose rather than the spec's MAUI recommendation; that decision and its consequences are recorded in [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md).
 
 ## Roadmap
 
