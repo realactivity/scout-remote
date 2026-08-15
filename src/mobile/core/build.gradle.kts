@@ -5,7 +5,7 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-group = "dev.scoutremote"
+group = "dev.lantern"
 version = "0.1.0"
 
 // Target Java 17 bytecode so the Android :app module can consume this module directly.

@@ -133,13 +133,41 @@ When the Android `app` module (`src/mobile/app`) is built, the Compose theme mus
 - [ ] Keep copy terse and evidence-first, matching "Signals, not vibes."
 - [ ] Confirm the proposed status mappings with design before relying on them.
 
+## Naming and positioning
+
+**Decided.** The product ships as **Lantern**, positioned as **"Lantern for Microsoft
+Scout."** This is the nominative pattern used by Apollo for Reddit and Ivory for
+Mastodon: a distinct, ownable product name plus "for Microsoft Scout" as a descriptor,
+never leading with Microsoft's mark. Leading with the mark ("Scout Remote") invites
+Play Store rejection and a legal challenge; the nominative pattern keeps the mark as
+honest descriptive use.
+
+Why Lantern fits the architecture: Scout never connects to the phone. It hangs a light
+in a shared place (`status.json`, activity, receipts) that the phone reads from across
+the water. That is the Old North Church signal, April 1775: a pre-agreed protocol, a
+bounded vocabulary, asynchronous, sender and receiver never directly connected. Presence
+is evidence-based (spec Appendix A): a lantern is lit or it is not, so the app shows the
+light and `lastSeenUtc` rather than claiming "online." The status pane (spec §9.1) is the
+icon itself, which doubles as a home-screen widget.
+
+| Surface | Name |
+|---|---|
+| App / product | Lantern (wordmark lowercase `lantern`) |
+| Desktop bridge package | Lantern Bridge |
+| Protocol identifier | `lantern/1.0` |
+| GitHub repository | `realactivity/scout-remote` (unchanged; existing URLs stay valid) |
+
+**Voice rule: timestamps over adjectives.** Prefer concrete evidence ("last seen 2m",
+`lastSeenUtc`) over claims. Tagline: "Signals, not vibes."
+
 ## Open decisions
 
-- **Product name vs codebase.** The brand is **lantern**; the repository, protocol
-  (`ProtocolManifest.PROTOCOL_NAME = "scout-remote"`), and package IDs still say
-  **scout-remote**. This document treats "lantern" as the customer-facing product
-  name for the mobile client and does **not** rename code or the protocol. A full
-  rename (protocol identifier, package IDs, plugin identity) is a separate decision.
-- **Font licensing.** Space Grotesk, Roboto Flex, and IBM Plex Mono ship under
-  open licenses (SIL OFL / Apache); confirm and vendor the exact weights during
-  Phase 0 packaging.
+- **Trademark clearance.** "Lantern" has coexisting marks in unrelated categories (a
+  censorship-circumvention VPN, a healthcare benefits navigator). Run a real clearance
+  screen for the app category before public launch, and assume the bare domain is taken
+  (a `lantern.build` / `uselantern.app`-style domain works). Verify "for Microsoft Scout"
+  against Microsoft's current trademark guidelines. Backups if clearance fails, in order:
+  **Sitrep** (literal, zero romance), **Heliograph** (most ownable, longest), **Semaphore**
+  (best pun on the queue semantics, but crowded by the CI company).
+- **Font licensing.** Space Grotesk, Roboto Flex, and IBM Plex Mono ship under open
+  licenses (SIL OFL / Apache); confirm and vendor the exact weights during Phase 0.

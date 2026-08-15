@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://scout-remote.dev/schemas/command.schema.json",
+  "$id": "https://lantern.dev/schemas/command.schema.json",
   "title": "Remote command (commands/inbox/{commandId}.json)",
   "description": "Mobile-to-bridge command. Immutable once written; idempotent via processed receipts; must not execute after expiresUtc. Spec section 7.",
   "type": "object",

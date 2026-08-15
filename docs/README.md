@@ -1,6 +1,6 @@
 # docs/
 
-Reference architecture for Scout Remote.
+Reference architecture for Lantern.
 
 | File | Purpose |
 |---|---|

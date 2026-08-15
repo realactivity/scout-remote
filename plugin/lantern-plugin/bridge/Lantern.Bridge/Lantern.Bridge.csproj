@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>Local MCP bridge/helper: owns desktop MSAL sign-in, Graph App Folder I/O, schema/version validation, protocol serialization, and idempotency receipts. Returns no secrets to Scout.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../src/shared/Lantern.Domain/Lantern.Domain.csproj" />
+  </ItemGroup>
+  <!-- Phase 0: add MCP server SDK, Microsoft.Identity.Client (broker-enabled), and
+       Microsoft.Graph PackageReferences once the Entra registration exists. -->
+</Project>

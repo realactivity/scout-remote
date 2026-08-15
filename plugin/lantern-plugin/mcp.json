@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "lantern-bridge": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["${PLUGIN_ROOT}/bridge/publish/Lantern.Bridge.dll"],
+      "env": {
+        "LANTERN_AGENT_ID": "primary",
+        "LANTERN_STATE_DIR": "${PLUGIN_DATA}/state"
+      }
+    }
+  }
+}

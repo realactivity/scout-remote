@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://scout-remote.dev/schemas/agent-status.schema.json",
+  "$id": "https://lantern.dev/schemas/agent-status.schema.json",
   "title": "Agent status snapshot (agents/{agentId}/status.json)",
   "description": "Latest bridge-published agent status. Presence staleness is derived by the client from lastSeenUtc; never show online without freshness evidence. Spec sections 6.2, 15.1, Appendix A.2.",
   "type": "object",

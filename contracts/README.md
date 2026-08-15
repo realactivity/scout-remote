@@ -30,7 +30,7 @@ each other's internals.
    a terminal status (spec §15.1). Corrections after that are new events
    referencing the original `commandId`. Consumers therefore use ETags for
    in-flight responses just as for other mutable files.
-5. Both the bridge-side .NET domain model (`src/shared/ScoutRemote.Domain`) and
+5. Both the bridge-side .NET domain model (`src/shared/Lantern.Domain`) and
    the mobile Kotlin domain model (`src/mobile/core`) serialize to and from
    these schemas. Contract tests on both sides validate against `schemas/`
    using `examples/` as fixtures (Kotlin `ContractGoldenFileTest`).

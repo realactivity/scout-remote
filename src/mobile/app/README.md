@@ -11,7 +11,7 @@ module is bootstrapped at the start of Phase 0 with current Android Studio / AGP
 templates so the scaffold matches the toolchain actually in use.
 
 1. In Android Studio, create an "Empty Activity" (Compose) project with
-   application id `dev.scoutremote.app`, then move its `app/` module here and
+   application id `dev.lantern.app`, then move its `app/` module here and
    add `include(":app")` to [`../settings.gradle.kts`](../settings.gradle.kts).
 2. Add `implementation(project(":core"))` plus MSAL Android
    (`com.microsoft.identity.client:msal`) once the Entra app registration
@@ -23,7 +23,7 @@ templates so the scaffold matches the toolchain actually in use.
 - **Android-only APIs live here, never in `:core`.** The `core` module is pure
   Kotlin/JVM. That boundary is what makes iOS an implementation phase rather
   than a rewrite.
-- Implement the `dev.scoutremote.core.platform` interfaces here.
+- Implement the `dev.lantern.core.platform` interfaces here.
   - `SecureStorage` uses Keystore-backed encrypted storage (holds the MSAL
     token cache).
   - `BackgroundScheduler` uses WorkManager status/response checks within
@@ -34,7 +34,7 @@ templates so the scaffold matches the toolchain actually in use.
     PKCE). No client secret in the APK.
   - `ExternalAppLauncher` opens artifacts in Microsoft 365 apps via OneDrive
     links.
-- Implement `dev.scoutremote.core.application.IdentityService` over MSAL
+- Implement `dev.lantern.core.application.IdentityService` over MSAL
   Android with the broker. Scopes come from `IdentityService.MVP_SCOPES`.
   Never broaden them ad hoc (spec §10.2).
 - Screens (spec §9) are Home, Activity, Chats, Artifacts, Automations, Usage,

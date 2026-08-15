@@ -2,10 +2,19 @@
   "$comment": "Machine-readable brand tokens for the lantern mobile client. Source of truth is docs/lantern-brand-sheet.svg; every hex here appears verbatim in that file. Consumed by the future Android Compose theme (src/mobile/app). Human guidance and provenance: docs/brand-guidelines.md.",
   "brand": {
     "name": "lantern",
+    "displayName": "Lantern",
+    "storeTitle": "Lantern for Microsoft Scout",
     "tagline": "Signals, not vibes.",
     "descriptor": "A mobile companion for Microsoft Scout",
     "lockup": "lantern for Microsoft Scout",
-    "productOf": "Microsoft Scout companion (nominative use; verify against Microsoft trademark guidelines)"
+    "voiceRule": "timestamps over adjectives",
+    "productOf": "Microsoft Scout companion (nominative use; verify against Microsoft trademark guidelines)",
+    "naming": {
+      "app": "Lantern",
+      "desktopPackage": "Lantern Bridge",
+      "protocolId": "lantern/1.0",
+      "repository": "realactivity/scout-remote"
+    }
   },
   "color": {
     "core": {
