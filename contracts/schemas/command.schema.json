@@ -50,5 +50,15 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "message" } }, "required": ["type"] },
+      "then": { "required": ["text"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "cancel_request" } }, "required": ["type"] },
+      "then": { "required": ["targetCommandId"] }
+    }
+  ]
 }

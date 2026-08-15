@@ -52,5 +52,11 @@
         "modelTokens": { "type": ["integer", "null"], "minimum": 0 }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "waiting_for_desktop_approval" } }, "required": ["status"] },
+      "then": { "required": ["attentionReason"] }
+    }
+  ]
 }
