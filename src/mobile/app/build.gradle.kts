@@ -15,8 +15,8 @@ android {
         applicationId = "dev.lantern.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.2.0"
+        versionCode = 2
+        versionName = "0.2.1"
         buildConfigField("String", "LANTERN_CLIENT_ID", "\"${System.getenv("LANTERN_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "LANTERN_TENANT_ID", "\"${System.getenv("LANTERN_TENANT_ID") ?: ""}\"")
     }
@@ -31,9 +31,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -66,7 +63,6 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
-    implementation("androidx.security:security-crypto:1.0.0")
     implementation("com.microsoft.identity.client:msal:5.10.0")
 
     testImplementation("junit:junit:4.13.2")

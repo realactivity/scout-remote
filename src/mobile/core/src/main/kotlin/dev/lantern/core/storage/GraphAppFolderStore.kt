@@ -5,8 +5,12 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
@@ -29,6 +33,7 @@ class GraphAppFolderStore(
 ) : AppFolderStore {
     private var approotId: String? = null
     private var driveId: String? = null
+    private val approotMutex = Mutex()
 
     override suspend fun get(path: String): StoredItem? {
         ensureApproot()
@@ -151,17 +156,24 @@ class GraphAppFolderStore(
         if (approotId != null && driveId != null) {
             return
         }
-        val response = send("GET", "$GRAPH/me/drive/special/approot", null, null)
-        check(response.statusCode() in 200..299) { "Graph approot ${response.statusCode()}: ${String(response.body())}" }
-        val obj = Json.parseToJsonElement(String(response.body())).jsonObject
-        approotId = obj["id"]?.jsonPrimitive?.content
-        driveId = obj["parentReference"]?.jsonObject?.get("driveId")?.jsonPrimitive?.contentOrNull
-        if (driveId == null) {
-            val drive = send("GET", "$GRAPH/me/drive", null, null)
-            check(drive.statusCode() in 200..299)
-            driveId = Json.parseToJsonElement(String(drive.body())).jsonObject["id"]?.jsonPrimitive?.content
+        approotMutex.withLock {
+            if (approotId != null && driveId != null) {
+                return@withLock
+            }
+            val response = send("GET", "$GRAPH/me/drive/special/approot", null, null)
+            check(response.statusCode() in 200..299) {
+                "Graph approot ${response.statusCode()}: ${String(response.body())}"
+            }
+            val obj = Json.parseToJsonElement(String(response.body())).jsonObject
+            approotId = obj["id"]?.jsonPrimitive?.content
+            driveId = obj["parentReference"]?.jsonObject?.get("driveId")?.jsonPrimitive?.contentOrNull
+            if (driveId == null) {
+                val drive = send("GET", "$GRAPH/me/drive", null, null)
+                check(drive.statusCode() in 200..299)
+                driveId = Json.parseToJsonElement(String(drive.body())).jsonObject["id"]?.jsonPrimitive?.content
+            }
+            check(!approotId.isNullOrBlank() && !driveId.isNullOrBlank()) { "Graph approot ids missing" }
         }
-        check(!approotId.isNullOrBlank() && !driveId.isNullOrBlank()) { "Graph approot ids missing" }
     }
 
     private suspend fun metadata(path: String): StoredItem? {
@@ -233,15 +245,17 @@ class GraphAppFolderStore(
                 return response
             }
             val retryAfter = response.headers().firstValue("Retry-After").orElse(null)
-            val delayMs = retryAfter?.toLongOrNull()?.times(1000)
+            val delayMs = retryDelayMillis(retryAfter, java.time.Instant.now())
                 ?: (1L shl attempt) * 1000
-            delay(delayMs)
+            delay(delayMs.coerceIn(1_000, 30_000))
             attempt++
         }
     }
 
-    private fun itemByPathUri(path: String): String =
-        "$GRAPH/drives/$driveId/items/$approotId:/${normalize(path)}"
+    private fun itemByPathUri(path: String): String {
+        val escaped = normalize(path).split('/').joinToString("/") { encode(it) }
+        return "$GRAPH/drives/$driveId/items/$approotId:/$escaped"
+    }
 
     private fun parseItem(body: String, path: String, content: ByteArray?): StoredItem {
         if (body.isBlank()) {
@@ -270,12 +284,27 @@ class GraphAppFolderStore(
 
     private fun quoteEtag(etag: String): String = if (etag.startsWith('"')) etag else "\"$etag\""
 
-    private fun normalize(path: String): String = path.replace('\\', '/').trimStart('/')
+    private fun normalize(path: String): String {
+        val segments = path.replace('\\', '/').trimStart('/').split('/').filter { it.isNotEmpty() }
+        require(segments.none { it == "." || it == ".." || '\u0000' in it }) {
+            "Invalid App Folder path: $path"
+        }
+        return segments.joinToString("/")
+    }
 
     private fun encode(value: String): String = java.net.URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
 
     companion object {
         private const val GRAPH = "https://graph.microsoft.com/v1.0"
+
+        internal fun retryDelayMillis(raw: String?, now: java.time.Instant): Long? {
+            raw ?: return null
+            raw.toLongOrNull()?.let { return it * 1000 }
+            return runCatching {
+                val retryAt = ZonedDateTime.parse(raw, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()
+                java.time.Duration.between(now, retryAt).toMillis().coerceAtLeast(1_000)
+            }.getOrNull()
+        }
     }
 }
 

@@ -14,6 +14,7 @@ import dev.lantern.core.domain.CommandConstraints
 import dev.lantern.core.domain.CommandType
 import dev.lantern.core.domain.RemoteResponse
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,6 +27,7 @@ data class HomeUiState(
     val lastResponse: RemoteResponse? = null,
     val message: String? = null,
     val sending: Boolean = false,
+    val protocolIncompatible: Boolean = false,
 ) {
     val pane: StatusToken
         get() = paneStatus(status?.state ?: AgentState.UNKNOWN, stale)
@@ -40,6 +42,8 @@ class HomeViewModel(
 
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state
+    @Volatile
+    private var foreground = false
 
     fun onDraftChange(value: String) {
         _state.value = _state.value.copy(draft = value)
@@ -47,17 +51,51 @@ class HomeViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            applySync(sync.refreshForeground())
+            refreshNow()
         }
+    }
+
+    fun onForegroundStart() {
+        if (foreground) {
+            return
+        }
+        foreground = true
+        refresh()
+    }
+
+    fun onForegroundStop() {
+        foreground = false
     }
 
     fun send() {
         val text = _state.value.draft.trim()
-        if (text.isEmpty() || _state.value.sending) {
+        if (text.isEmpty() || _state.value.sending || _state.value.protocolIncompatible) {
             return
         }
         viewModelScope.launch {
-            _state.value = _state.value.copy(sending = true, message = null)
+            sendAndWatch(text)
+        }
+    }
+
+    internal suspend fun refreshNow() {
+        try {
+            val initial = sync.refreshForeground()
+            applySync(initial)
+            if (!initial.protocolIncompatible && commands.flushPending() > 0) {
+                applySync(sync.refreshForeground())
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            _state.value = _state.value.copy(
+                message = "sync unavailable; queued commands remain local",
+            )
+        }
+    }
+
+    internal suspend fun sendAndWatch(text: String) {
+        _state.value = _state.value.copy(sending = true, message = null)
+        try {
             val command = commands.send(
                 type = CommandType.MESSAGE,
                 conversationId = "remote-home",
@@ -69,7 +107,20 @@ class HomeViewModel(
                 draft = "",
                 message = "queued ${command.commandId}",
             )
-            applySync(sync.refreshForeground())
+            val response = sync.watchInFlight(
+                commandId = command.commandId,
+                isForeground = { foreground },
+            )
+            if (response != null) {
+                applyStatus(_state.value.status, listOf(response))
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            _state.value = _state.value.copy(
+                sending = false,
+                message = "send unavailable; command remains in the local queue",
+            )
         }
     }
 
@@ -84,6 +135,14 @@ class HomeViewModel(
     }
 
     private fun applySync(result: SyncResult) {
+        if (result.protocolIncompatible) {
+            _state.value = _state.value.copy(
+                protocolIncompatible = true,
+                message = "protocol upgrade required before commands can be sent",
+            )
+            return
+        }
+        _state.value = _state.value.copy(protocolIncompatible = false)
         applyStatus(result.status, result.newResponses)
     }
 }

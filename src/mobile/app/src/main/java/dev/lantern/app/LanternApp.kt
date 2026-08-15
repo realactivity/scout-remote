@@ -22,6 +22,16 @@ class LanternApp : Application() {
         private set
     lateinit var identity: MsalIdentityService
         private set
+    lateinit var secureStorage: KeystoreSecureStorage
+        private set
+    lateinit var backgroundScheduler: WorkManagerBackgroundScheduler
+        private set
+    lateinit var notificationService: SystemNotificationService
+        private set
+    lateinit var authCallbackHandler: MsalAuthCallbackHandler
+        private set
+    lateinit var externalAppLauncher: AndroidExternalAppLauncher
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -40,10 +50,10 @@ class LanternApp : Application() {
             },
         )
         syncService = BridgeSyncServiceImpl(transport, clock)
-        KeystoreSecureStorage(this)
-        WorkManagerBackgroundScheduler()
-        SystemNotificationService()
-        MsalAuthCallbackHandler()
-        AndroidExternalAppLauncher(this)
+        secureStorage = KeystoreSecureStorage(this)
+        backgroundScheduler = WorkManagerBackgroundScheduler()
+        notificationService = SystemNotificationService()
+        authCallbackHandler = MsalAuthCallbackHandler()
+        externalAppLauncher = AndroidExternalAppLauncher(this)
     }
 }

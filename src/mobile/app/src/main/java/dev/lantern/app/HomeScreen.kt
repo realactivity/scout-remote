@@ -17,12 +17,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.lantern.app.brand.DisplayFont
 import dev.lantern.app.brand.EvidenceMono
 import dev.lantern.app.brand.LocalBrandColors
@@ -32,7 +36,8 @@ import dev.lantern.app.brand.colorOf
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
     val colors = LocalBrandColors.current
     val tokens = LocalBrandTokens.current
     val pane = colors.colorOf(state.pane)
@@ -40,6 +45,24 @@ fun HomeScreen(viewModel: HomeViewModel) {
         state.status == null -> "unknown"
         state.stale -> "stale"
         else -> state.status!!.state.name.lowercase()
+    }
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> viewModel.onForegroundStart()
+                Lifecycle.Event.ON_STOP -> viewModel.onForegroundStop()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            viewModel.onForegroundStart()
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onForegroundStop()
+        }
     }
 
     Column(
@@ -105,10 +128,17 @@ fun HomeScreen(viewModel: HomeViewModel) {
         )
         Button(
             onClick = viewModel::send,
-            enabled = !state.sending,
+            enabled = !state.sending && !state.protocolIncompatible,
             colors = ButtonDefaults.buttonColors(containerColor = colors.steeple, contentColor = colors.bone),
         ) {
             Text(if (state.sending) "sending" else "send", fontFamily = UiFont)
+        }
+        Button(
+            onClick = viewModel::refresh,
+            enabled = !state.sending,
+            colors = ButtonDefaults.buttonColors(containerColor = colors.steeple, contentColor = colors.bone),
+        ) {
+            Text("refresh", fontFamily = UiFont)
         }
         state.message?.let {
             Text(it, color = colors.candle, fontFamily = EvidenceMono, fontSize = 12.sp)

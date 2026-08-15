@@ -8,6 +8,7 @@ import dev.lantern.core.domain.RemoteResponse
 import dev.lantern.core.ulid.Ulid
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlinx.coroutines.CancellationException
 
 class CommandServiceImpl(
     private val transport: BridgeTransport,
@@ -37,12 +38,23 @@ class CommandServiceImpl(
             constraints = constraints ?: CommandConstraints(allowSensitiveActions = false),
         )
         queue.put(command)
-        transport.enqueueCommand(command)
+        enqueueBestEffort(command)
         return command
     }
 
     override suspend fun getResponse(commandId: String): RemoteResponse? =
         transport.readResponse(commandId)
+
+    override suspend fun flushPending(): Int {
+        val now = clock.now()
+        var delivered = 0
+        for (command in queue.all().filterNot { it.isExpired(now) }) {
+            if (enqueueBestEffort(command)) {
+                delivered++
+            }
+        }
+        return delivered
+    }
 
     override suspend fun resendAsNew(expiredCommandId: String): RemoteCommand {
         val original = queue.get(expiredCommandId)
@@ -54,4 +66,14 @@ class CommandServiceImpl(
             constraints = original.constraints,
         )
     }
+
+    private suspend fun enqueueBestEffort(command: RemoteCommand): Boolean =
+        try {
+            transport.enqueueCommand(command)
+            true
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            false
+        }
 }

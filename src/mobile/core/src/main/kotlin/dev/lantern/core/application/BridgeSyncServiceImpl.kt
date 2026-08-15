@@ -4,6 +4,8 @@ import dev.lantern.core.domain.CommandStatus
 import dev.lantern.core.domain.RemoteResponse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class BridgeSyncServiceImpl(
     private val transport: BridgeTransport,
@@ -13,17 +15,18 @@ class BridgeSyncServiceImpl(
     private val watchedCommandIds: MutableSet<String> = linkedSetOf(),
 ) : BridgeSyncService {
 
-    @Volatile
     private var lastActivitySince = clock.now() - 1.minutes
+    private val refreshMutex = Mutex()
+    private val watchMutex = Mutex()
 
-    fun watch(commandId: String) {
-        watchedCommandIds += commandId
+    suspend fun watch(commandId: String) {
+        watchMutex.withLock { watchedCommandIds += commandId }
     }
 
-    override suspend fun refreshForeground(): SyncResult {
+    override suspend fun refreshForeground(): SyncResult = refreshMutex.withLock {
         val protocol = transport.readProtocol()
         if (protocol != null && !protocol.isCompatible) {
-            return SyncResult(syncedUtc = clock.now(), protocolIncompatible = true)
+            return@withLock SyncResult(syncedUtc = clock.now(), protocolIncompatible = true)
         }
         val status = transport.readStatus(protocol?.agentId ?: agentId)
         val conversationId = activeConversationId
@@ -34,9 +37,8 @@ class BridgeSyncServiceImpl(
         if (activity.isNotEmpty()) {
             lastActivitySince = activity.maxOf { it.occurredUtc }
         }
-        val responses = watchedCommandIds.mapNotNull { transport.readResponse(it) }
-        responses.filter { it.status.isTerminal() }.forEach { watchedCommandIds.remove(it.commandId) }
-        return SyncResult(
+        val responses = readWatchedResponses()
+        return@withLock SyncResult(
             syncedUtc = clock.now(),
             status = status,
             newResponses = responses,
@@ -44,14 +46,14 @@ class BridgeSyncServiceImpl(
         )
     }
 
-    override suspend fun refreshBackground(): SyncResult {
+    override suspend fun refreshBackground(): SyncResult = refreshMutex.withLock {
         val protocol = transport.readProtocol()
         if (protocol != null && !protocol.isCompatible) {
-            return SyncResult(syncedUtc = clock.now(), protocolIncompatible = true)
+            return@withLock SyncResult(syncedUtc = clock.now(), protocolIncompatible = true)
         }
         val status = transport.readStatus(protocol?.agentId ?: agentId)
-        val responses = watchedCommandIds.mapNotNull { transport.readResponse(it) }
-        return SyncResult(
+        val responses = readWatchedResponses()
+        return@withLock SyncResult(
             syncedUtc = clock.now(),
             status = status,
             newResponses = responses,
@@ -63,12 +65,17 @@ class BridgeSyncServiceImpl(
         isForeground: () -> Boolean,
         initialDelay: Duration,
         maxDelay: Duration,
+        maxWatchDuration: Duration,
         delay: suspend (Duration) -> Unit,
     ): RemoteResponse? {
         watch(commandId)
         var wait = initialDelay
-        while (isForeground()) {
-            delay(wait)
+        var elapsed = Duration.ZERO
+        while (isForeground() && elapsed < maxWatchDuration) {
+            val remaining = maxWatchDuration - elapsed
+            val nextWait = wait.coerceAtMost(remaining)
+            delay(nextWait)
+            elapsed += nextWait
             if (!isForeground()) {
                 return null
             }
@@ -80,6 +87,16 @@ class BridgeSyncServiceImpl(
             wait = (wait * 2).coerceAtMost(maxDelay)
         }
         return transport.readResponse(commandId)
+    }
+
+    private suspend fun readWatchedResponses(): List<RemoteResponse> {
+        val commandIds = watchMutex.withLock { watchedCommandIds.toList() }
+        val responses = commandIds.mapNotNull { transport.readResponse(it) }
+        val terminal = responses.filter { it.status.isTerminal() }.map { it.commandId }.toSet()
+        if (terminal.isNotEmpty()) {
+            watchMutex.withLock { watchedCommandIds.removeAll(terminal) }
+        }
+        return responses
     }
 }
 

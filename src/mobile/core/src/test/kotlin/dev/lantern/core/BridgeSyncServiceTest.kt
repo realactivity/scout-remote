@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
@@ -112,6 +113,32 @@ class BridgeSyncServiceTest {
             assertTrue(response!!.status.isTerminal())
             assertTrue(delays.size >= 2)
             assertTrue(delays[1] >= delays[0])
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `in-flight watch stops at its duration budget`() = runBlocking {
+        val dir = Files.createTempDirectory("lantern-watch-budget-")
+        try {
+            val sync = BridgeSyncServiceImpl(
+                GraphBridgeTransport(FilesystemAppFolderStore(dir)),
+                InstantClock { now },
+            )
+            val delays = mutableListOf<kotlin.time.Duration>()
+
+            val response = sync.watchInFlight(
+                commandId = "01KZYMGHG0NPD8AF5A96MP2YFW",
+                isForeground = { true },
+                initialDelay = 15.seconds,
+                maxDelay = 60.seconds,
+                maxWatchDuration = 45.seconds,
+                delay = { delays += it },
+            )
+
+            assertEquals(null, response)
+            assertEquals(45.seconds, delays.fold(kotlin.time.Duration.ZERO) { total, item -> total + item })
         } finally {
             dir.toFile().deleteRecursively()
         }

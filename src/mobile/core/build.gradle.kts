@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.lantern"
-version = "0.1.0"
+version = "0.2.1"
 
 // Target Java 17 bytecode so the Android :app module can consume this module directly.
 java {

@@ -10,12 +10,12 @@ in [docs/mobile-framework-kotlin.md](../../../docs/mobile-framework-kotlin.md).
 
 | Piece | Notes |
 |---|---|
-| Compose Home | Agent state, explicit `lastSeenUtc`, send-message affordance |
+| Compose Home | Lifecycle refresh, explicit `lastSeenUtc`, durable send queue, bounded in-flight watch |
 | Theme | Colors loaded from [`docs/brand-tokens.json`](../../../docs/brand-tokens.json) |
-| `SecureStorage` | Keystore-backed `EncryptedSharedPreferences` |
-| `AuthCallbackHandler` | MSAL redirect / PKCE wiring; real sign-in is human-gated |
+| `SecureStorage` | Keystore-backed `EncryptedSharedPreferences`; MSAL cache integration remains a release gate |
+| `AuthCallbackHandler` | Honest scaffold; interactive MSAL redirect / PKCE handling remains human-gated |
 | `BackgroundScheduler` / `NotificationService` | Honest stubs: they record the request, they do not pretend work ran |
-| `IdentityService` | MSAL Android public client; throws clearly when `LANTERN_CLIENT_ID` is unset |
+| `IdentityService` | Honest scaffold; no Graph token is acquired in the Phase 0 debug build |
 | Local mailbox | Filesystem App Folder under the app files dir (harness). Graph is human-gated. |
 
 ```bash

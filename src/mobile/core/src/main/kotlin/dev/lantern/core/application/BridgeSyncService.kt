@@ -30,6 +30,7 @@ interface BridgeSyncService {
         isForeground: () -> Boolean,
         initialDelay: kotlin.time.Duration = kotlin.time.Duration.parse("15s"),
         maxDelay: kotlin.time.Duration = kotlin.time.Duration.parse("60s"),
+        maxWatchDuration: kotlin.time.Duration = kotlin.time.Duration.parse("4h"),
         delay: suspend (kotlin.time.Duration) -> Unit = { kotlinx.coroutines.delay(it) },
     ): RemoteResponse?
 }

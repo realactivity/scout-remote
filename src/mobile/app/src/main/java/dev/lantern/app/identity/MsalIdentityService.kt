@@ -6,8 +6,9 @@ import dev.lantern.core.application.IdentityService
 import dev.lantern.core.application.SignedInAccount
 
 /**
- * MSAL Android public client. Silent first when a client ID is configured.
- * Phase 0 CI has no tenant, so sign-in is human-gated and throws clearly.
+ * Phase 0 identity scaffold. The Entra registration and interactive MSAL
+ * implementation are human-gated, so this class fails clearly instead of
+ * pretending a token or account exists.
  */
 class MsalIdentityService(private val context: Context) : IdentityService {
     @Volatile
@@ -20,7 +21,7 @@ class MsalIdentityService(private val context: Context) : IdentityService {
     override suspend fun signIn(): SignedInAccount {
         if (BuildConfig.LANTERN_CLIENT_ID.isBlank()) {
             throw IllegalStateException(
-                "LANTERN_CLIENT_ID is not configured. Android MSAL + PKCE is wired; real sign-in is human-gated.",
+                "LANTERN_CLIENT_ID is not configured. Android MSAL sign-in is human-gated.",
             )
         }
         throw IllegalStateException(

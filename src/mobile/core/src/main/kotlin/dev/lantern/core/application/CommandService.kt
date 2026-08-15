@@ -22,6 +22,13 @@ interface CommandService {
 
     suspend fun getResponse(commandId: String): RemoteResponse?
 
+    /**
+     * Replays unexpired commands from the durable local queue. Transport enqueue
+     * is create-if-absent, so reconnect retries cannot duplicate remote commands.
+     * Returns the number delivered or already present remotely.
+     */
+    suspend fun flushPending(): Int
+
     /** Expired commands are resent as new commands with new IDs. Never re-queued (spec §15). */
     suspend fun resendAsNew(expiredCommandId: String): RemoteCommand
 }

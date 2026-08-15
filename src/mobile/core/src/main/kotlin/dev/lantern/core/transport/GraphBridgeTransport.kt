@@ -18,6 +18,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import kotlinx.serialization.encodeToString
+import kotlin.time.Duration.Companion.days
 
 /**
  * [BridgeTransport] over an [AppFolderStore] (Graph or filesystem harness).
@@ -66,13 +67,15 @@ class GraphBridgeTransport(
     }
 
     override suspend fun readActivity(sinceUtc: Instant): List<ActivityEvent> {
-        val start = ProtocolPaths.activityDay(sinceUtc)
-        val end = ProtocolPaths.activityDay(clock())
+        val now = clock()
+        val effectiveSince = maxOf(sinceUtc, now - 30.days)
+        val start = ProtocolPaths.activityDay(effectiveSince)
+        val end = ProtocolPaths.activityDay(now)
         return daysInclusive(start, end)
             .flatMap { day -> store.list(ProtocolPaths.activityFolder(day)) }
             .filter { it.path.endsWith(".json") }
             .mapNotNull { item -> decodeJson<ActivityEvent>(item.path) }
-            .filter { it.occurredUtc >= sinceUtc }
+            .filter { it.occurredUtc >= effectiveSince }
             .sortedBy { it.eventId }
     }
 

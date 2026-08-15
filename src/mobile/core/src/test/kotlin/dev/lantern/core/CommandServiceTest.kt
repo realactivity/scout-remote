@@ -1,10 +1,18 @@
 package dev.lantern.core
 
 import dev.lantern.core.application.CommandServiceImpl
+import dev.lantern.core.application.BridgeTransport
 import dev.lantern.core.application.InMemoryCommandQueue
 import dev.lantern.core.application.InstantClock
+import dev.lantern.core.domain.ActivityEvent
+import dev.lantern.core.domain.AgentStatus
+import dev.lantern.core.domain.ArtifactDetails
 import dev.lantern.core.domain.CommandRequester
 import dev.lantern.core.domain.CommandType
+import dev.lantern.core.domain.ConversationEvent
+import dev.lantern.core.domain.ProtocolManifest
+import dev.lantern.core.domain.RemoteCommand
+import dev.lantern.core.domain.RemoteResponse
 import dev.lantern.core.storage.FilesystemAppFolderStore
 import dev.lantern.core.transport.GraphBridgeTransport
 import dev.lantern.core.ulid.Ulid
@@ -88,5 +96,45 @@ class CommandServiceTest {
         } finally {
             dir.toFile().deleteRecursively()
         }
+    }
+
+    @Test
+    fun `offline send remains durable and flushes after reconnect`() = runBlocking {
+        val queue = InMemoryCommandQueue()
+        val transport = FlakyTransport()
+        val service = CommandServiceImpl(
+            transport = transport,
+            queue = queue,
+            clock = InstantClock { now },
+            requester = { CommandRequester("00000000-0000-0000-0000-000000000000") },
+            ulid = { "01KZYMGHG0NPD8AF5A96MP2YFW" },
+        )
+
+        val command = service.send(CommandType.MESSAGE, "remote-test", "offline", null)
+        assertEquals(command, queue.get(command.commandId))
+        assertTrue(transport.enqueued.isEmpty())
+
+        transport.available = true
+        assertEquals(1, service.flushPending())
+        assertEquals(listOf(command.commandId), transport.enqueued.map { it.commandId })
+    }
+
+    private class FlakyTransport : BridgeTransport {
+        var available = false
+        val enqueued = mutableListOf<RemoteCommand>()
+
+        override suspend fun enqueueCommand(command: RemoteCommand) {
+            check(available) { "offline" }
+            if (enqueued.none { it.commandId == command.commandId }) {
+                enqueued += command
+            }
+        }
+
+        override suspend fun readProtocol(): ProtocolManifest? = null
+        override suspend fun readStatus(agentId: String): AgentStatus? = null
+        override suspend fun readResponse(commandId: String): RemoteResponse? = null
+        override suspend fun readConversationEvents(conversationId: String): List<ConversationEvent> = emptyList()
+        override suspend fun readActivity(sinceUtc: Instant): List<ActivityEvent> = emptyList()
+        override suspend fun resolveArtifact(driveItemId: String): ArtifactDetails? = null
     }
 }
