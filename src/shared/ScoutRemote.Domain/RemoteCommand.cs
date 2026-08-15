@@ -9,7 +9,7 @@ public sealed record RemoteCommand
 {
     public required int SchemaVersion { get; init; }
 
-    /// <summary>ULID — globally unique and never reused (replay control, spec §11).</summary>
+    /// <summary>ULID. Globally unique and never reused (replay control, spec §11).</summary>
     public required string CommandId { get; init; }
 
     public required string ConversationId { get; init; }

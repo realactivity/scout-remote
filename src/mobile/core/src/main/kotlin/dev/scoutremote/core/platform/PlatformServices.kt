@@ -23,7 +23,7 @@ interface BackgroundScheduler {
 
 /**
  * User notifications. Policy (spec §9.2): notify on command completion/failure/
- * waiting_for_desktop_approval; never per heartbeat — routine activity collapses to a digest.
+ * waiting_for_desktop_approval. Never per heartbeat. Routine activity collapses to a digest.
  */
 interface NotificationService {
     suspend fun notifyCommandOutcome(commandId: String, title: String, body: String)

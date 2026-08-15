@@ -11,7 +11,7 @@ public sealed record ConversationEvent
 {
     public required int SchemaVersion { get; init; }
 
-    /// <summary>ULID; unique and time-sortable — the stream is ordered by EventId.</summary>
+    /// <summary>ULID. Unique and time-sortable. The stream is ordered by EventId.</summary>
     public required string EventId { get; init; }
 
     public required string ConversationId { get; init; }

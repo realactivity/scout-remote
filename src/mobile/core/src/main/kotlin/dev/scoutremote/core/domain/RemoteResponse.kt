@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 /**
  * Bridge-to-mobile response (responses/{commandId}.json, schemaVersion 1).
  * Mutable while in flight (the bridge updates it through ACKNOWLEDGED/RUNNING); immutable once
- * it reaches a terminal status — corrections are new events referencing the original command.
+ * it reaches a terminal status. Corrections are new events referencing the original command.
  * Contract: contracts/schemas/response.schema.json.
  */
 @Serializable
@@ -28,8 +28,8 @@ data class RemoteResponse(
 
 /**
  * Wire command status (spec Appendix A.1, response.schema.json).
- * The client-local "draft" state — an unsent command cached on-device (spec §5, §15) —
- * deliberately does not appear here: drafts never reach the wire.
+ * The client-local "draft" state (an unsent command cached on-device, spec §5, §15)
+ * deliberately does not appear here. Drafts never reach the wire.
  */
 @Serializable
 enum class CommandStatus {
@@ -41,7 +41,7 @@ enum class CommandStatus {
     @SerialName("expired") EXPIRED,
     @SerialName("waiting_for_desktop_approval") WAITING_FOR_DESKTOP_APPROVAL,
 
-    /** Only when cancellation is confirmed by the bridge — never claimed optimistically. */
+    /** Only when cancellation is confirmed by the bridge. Never claimed optimistically. */
     @SerialName("canceled") CANCELED,
 }
 

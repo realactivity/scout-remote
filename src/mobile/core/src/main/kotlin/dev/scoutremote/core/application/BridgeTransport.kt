@@ -12,7 +12,7 @@ import kotlinx.datetime.Instant
 /**
  * Port for the bridge data plane. The MVP implementation is the Graph App Folder adapter;
  * if Microsoft ships a first-party Scout API, it becomes a new adapter behind this same
- * interface — the architecture invariant of spec §20.
+ * interface. That is the architecture invariant of spec §20.
  */
 interface BridgeTransport {
 
@@ -35,14 +35,14 @@ interface BridgeTransport {
     suspend fun readConversationEvents(conversationId: String): List<ConversationEvent>
 
     /**
-     * Reads activity events at or after [sinceUtc] — the foreground "activity delta"
+     * Reads activity events at or after [sinceUtc]. This is the foreground "activity delta"
      * of spec §16.2. Activity screen, spec §9.
      */
     suspend fun readActivity(sinceUtc: Instant): List<ActivityEvent>
 
     /**
      * Resolves an artifact reference to OneDrive item details for the Artifacts screen.
-     * Returns null when the item was deleted or is no longer accessible — the caller marks
+     * Returns null when the item was deleted or is no longer accessible. The caller marks
      * it unavailable rather than failing (spec §15).
      */
     suspend fun resolveArtifact(driveItemId: String): ArtifactDetails?
