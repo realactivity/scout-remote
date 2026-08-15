@@ -93,6 +93,8 @@ Build-time validation comes first — Scout is a Frontier product and Agent Plug
 
 The full first-time setup checklist and troubleshooting order are in the spec's operational runbook (§21).
 
+Accepted refinements on top of the spec are recorded in [`docs/architecture-improvements.md`](docs/architecture-improvements.md): adaptive foreground polling for in-flight commands (Phase 1), content-free Mode B push notifications when interactive use grows, and validating the `Files.ReadWrite.AppFolder` tenant assumption in week one of Phase 0 — before any feature code.
+
 ## Roadmap
 
 | Phase | Scope |
