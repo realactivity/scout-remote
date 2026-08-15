@@ -1,12 +1,9 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "scout-remote-bridge",
   "version": "0.1.0",
   "description": "Scout Remote desktop bridge: Scout skill plus local MCP bridge/helper that connects Scout to the Scout Remote mobile companion through the OneDrive App Folder protocol.",
   "author": {
     "name": "Scout Remote project"
-  },
-  "components": {
-    "skills": ["skills/scout-remote-bridge"],
-    "mcpServers": "mcp.json"
   }
 }

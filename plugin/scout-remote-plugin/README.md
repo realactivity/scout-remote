@@ -4,8 +4,9 @@ Desktop bridge packaged as an **Agent Plugins 1.0** bundle (spec §12): the Scou
 
 ```
 scout-remote-plugin/
-├── plugin.json                       Package identity (Agent Plugins 1.0 manifest)
-├── mcp.json                          Local MCP bridge server declaration
+├── plugin.json                       Package identity (Agent Plugins 1.0.0 manifest; components
+│                                     are discovered at the fixed paths below, never declared)
+├── mcp.json                          Local MCP bridge server declaration (stdio, ${PLUGIN_ROOT})
 ├── skills/
 │   └── scout-remote-bridge/
 │       └── SKILL.md                  Agent-facing orchestration instructions
@@ -29,7 +30,9 @@ This package is the **portable source-of-truth**. Scout is *not* assumed to inst
 4. Run the bridge sign-in once so it establishes its own MSAL cache — the same Entra app ID and signed-in Microsoft 365 user as the mobile app, but its **own** token cache. Tokens are never copied between devices.
 5. Enable the bridge heartbeat/automation with an acceptable cadence policy.
 
-If Scout later documents native Agent Plugins installation, this same package becomes directly installable without changing the bridge contract. Re-validate the manifest fields against the Agent Plugins 1.0 spec (agent-plugins.org) and Scout's installer requirements at that point — the validation checkpoint in spec Appendix C.
+If Scout later documents native Agent Plugins installation, this same package becomes directly installable without changing the bridge contract.
+
+**Conformance (spec Appendix C checkpoint, validated 15 Aug 2026):** `plugin.json` and `mcp.json` validate against the official Agent Plugins 1.0.0 schemas (published 6 Aug 2026, [agent-plugins.org](https://agent-plugins.org)). Per the standard, components live at fixed paths — skills are discovered under `skills/`, MCP servers come from the root `mcp.json` (explicit `"type"` per entry, `${PLUGIN_ROOT}` for plugin-relative paths) — and the manifest declares identity only; it cannot relocate or inline components. Re-validate against Scout's installer requirements if/when Scout ships native plugin installation.
 
 ## Division of responsibility
 
