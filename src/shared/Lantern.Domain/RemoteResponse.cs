@@ -24,12 +24,13 @@ public sealed record RemoteResponse
 
 /// <summary>
 /// Wire command status (spec Appendix A.1, response.schema.json).
-/// The client-local "draft" state (an unsent command cached on-device, spec §5, §15)
-/// deliberately does not appear here. Drafts never reach the wire.
+/// The client-local states deliberately do not appear here: "draft" (unsent, cached
+/// on-device) and "queued" (command written to the inbox with no response file yet) are
+/// presentation states the mobile client derives locally. The first wire status is the
+/// bridge's prompt acknowledgement (spec §5.1).
 /// </summary>
 public enum CommandStatus
 {
-    Queued,
     Acknowledged,
     Running,
     Completed,
