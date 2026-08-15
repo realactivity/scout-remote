@@ -17,6 +17,8 @@ device, deployment, or governance proof.
 | Secret hygiene | No credentials in protocol schemas; MCP and e2e secret scans; MSAL cache outside protocol/state directories |
 | Cross-language compatibility | .NET and Kotlin golden files plus filesystem end-to-end smoke |
 | Mobile architecture | Pure JVM core, lifecycle-owned ViewModel, durable local command retry, foreground in-flight watch |
+| Efficient mobile sync | SQLite metadata/protected payload cache plus delta/ETag/item-ID request-budget tests |
+| Runtime observability | Typed content-free operation, duration, retry, cache-count, and sync-age metrics with Logcat privacy tests |
 | Supply chain | SHA-pinned CI actions, exact CI dependencies, dependency update automation |
 | Governance | `SECURITY.md`, `CONTRIBUTING.md`, DCO sign-off, least-privilege workflow permissions |
 
@@ -35,7 +37,7 @@ production-ready:
 | Android background behavior | Stub | WorkManager implementation tested under Doze, standby, restart, and network loss |
 | Notifications | Stub | Completion, failure, and desktop-attention notifications tested without protocol content leakage |
 | Packaging | Not started | Signed release, SBOM, provenance, vulnerability scan, Play internal/closed test |
-| Reliability | Not started | 72-hour soak, throttling tests, crash recovery, offline queue recovery |
+| Reliability | Instrumented, soak not run | 72-hour soak, throttling tests, crash recovery, offline queue recovery |
 | Security acceptance | Partial | Device loss, account revocation, replay, injection, token inspection, dependency scan |
 
 ## Deployment boundary
