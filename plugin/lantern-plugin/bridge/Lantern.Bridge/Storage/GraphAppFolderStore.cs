@@ -20,6 +20,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     private readonly Func<DateTimeOffset> _clock;
     private string? _approotId;
     private string? _driveId;
+    private string? _approotPath;
 
     public GraphAppFolderStore(
         IBridgeIdentity identity,
@@ -97,12 +98,6 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     public async Task<StoredItem?> CreateIfAbsentAsync(string path, byte[] content, CancellationToken cancellationToken = default)
     {
         await EnsureApprootAsync(cancellationToken).ConfigureAwait(false);
-        var existing = await GetMetadataAsync(path, cancellationToken).ConfigureAwait(false);
-        if (existing is not null)
-        {
-            return null;
-        }
-
         using var response = await SendAsync(
             HttpMethod.Put,
             ItemByPathUri(path) + ":/content?@microsoft.graph.conflictBehavior=fail",
@@ -160,41 +155,66 @@ public sealed class GraphAppFolderStore : IAppFolderStore
     public async Task<DeltaPage> ListDeltaAsync(string? cursor, CancellationToken cancellationToken = default)
     {
         await EnsureApprootAsync(cancellationToken).ConfigureAwait(false);
-        var uri = string.IsNullOrWhiteSpace(cursor)
-            ? $"{GraphRoot}/drives/{_driveId}/items/{_approotId}/delta"
-            : cursor;
-        using var response = await SendAsync(HttpMethod.Get, uri, null, null, false, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
+        var initialUri = $"{GraphRoot}/drives/{_driveId}/items/{_approotId}/delta";
+        var next = string.IsNullOrWhiteSpace(cursor) ? initialUri : cursor;
         var items = new List<StoredItem>();
-        if (doc.RootElement.TryGetProperty("value", out var value))
+        var deletions = new List<DeletedItem>();
+        var reset = false;
+        string? finalCursor = null;
+        while (!string.IsNullOrWhiteSpace(next))
         {
-            foreach (var el in value.EnumerateArray())
+            using var response = await SendAsync(HttpMethod.Get, next, null, null, false, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == HttpStatusCode.Gone && !reset)
             {
-                if (!el.TryGetProperty("file", out _))
-                {
-                    continue;
-                }
-
-                var name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-                var id = el.TryGetProperty("id", out var i) ? i.GetString() ?? name : name;
-                var etag = ReadEtag(el);
-                var modified = ReadTimestamp(el);
-                items.Add(new StoredItem(name, etag, id, modified, Content: null));
+                reset = true;
+                next = initialUri;
+                items.Clear();
+                deletions.Clear();
+                continue;
             }
+
+            response.EnsureSuccessStatusCode();
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
+            if (doc.RootElement.TryGetProperty("value", out var value))
+            {
+                foreach (var el in value.EnumerateArray())
+                {
+                    var id = el.TryGetProperty("id", out var idElement)
+                        ? idElement.GetString() ?? ""
+                        : "";
+                    var path = DeltaPath(el);
+                    if (el.TryGetProperty("deleted", out _) || el.TryGetProperty("@removed", out _))
+                    {
+                        deletions.Add(new DeletedItem(id, path));
+                        continue;
+                    }
+                    if (!el.TryGetProperty("file", out _) || path is null)
+                    {
+                        continue;
+                    }
+
+                    items.Add(new StoredItem(
+                        path,
+                        ReadEtag(el),
+                        id.Length > 0 ? id : path,
+                        ReadTimestamp(el),
+                        Content: null));
+                }
+            }
+
+            finalCursor = doc.RootElement.TryGetProperty("@odata.deltaLink", out var delta)
+                ? delta.GetString()
+                : finalCursor;
+            next = doc.RootElement.TryGetProperty("@odata.nextLink", out var nextLink)
+                ? nextLink.GetString()
+                : null;
         }
 
-        string? next = null;
-        if (doc.RootElement.TryGetProperty("@odata.deltaLink", out var delta))
+        return new DeltaPage(items, finalCursor)
         {
-            next = delta.GetString();
-        }
-        else if (doc.RootElement.TryGetProperty("@odata.nextLink", out var nextLink))
-        {
-            next = nextLink.GetString();
-        }
-
-        return new DeltaPage(items, next);
+            Deletions = deletions,
+            Reset = reset,
+        };
     }
 
     public async Task<ArtifactResolution?> ResolveByItemIdAsync(string driveItemId, CancellationToken cancellationToken = default)
@@ -240,12 +260,21 @@ public sealed class GraphAppFolderStore : IAppFolderStore
         response.EnsureSuccessStatusCode();
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
         _approotId = doc.RootElement.GetProperty("id").GetString();
+        var approotName = doc.RootElement.TryGetProperty("name", out var name)
+            ? name.GetString()
+            : null;
         _driveId = doc.RootElement.TryGetProperty("parentReference", out var parent)
             && parent.TryGetProperty("driveId", out var drive)
             ? drive.GetString()
             : doc.RootElement.TryGetProperty("id", out _)
                 ? null
                 : null;
+        if (approotName is not null
+            && doc.RootElement.TryGetProperty("parentReference", out var parentReference)
+            && parentReference.TryGetProperty("path", out var parentPath))
+        {
+            _approotPath = GraphRelative(parentPath.GetString() ?? "").TrimEnd('/') + "/" + approotName;
+        }
         if (_driveId is null && doc.RootElement.TryGetProperty("parentReference", out var pr)
             && pr.TryGetProperty("driveId", out var d))
         {
@@ -346,6 +375,15 @@ public sealed class GraphAppFolderStore : IAppFolderStore
         bool ifNoneMatch,
         CancellationToken cancellationToken)
     {
+        var target = new Uri(uri);
+        var graphOrigin = new Uri(GraphRoot);
+        if (!string.Equals(target.Scheme, graphOrigin.Scheme, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(target.Host, graphOrigin.Host, StringComparison.OrdinalIgnoreCase)
+            || target.Port != graphOrigin.Port)
+        {
+            throw new InvalidOperationException("Refusing to send a Graph token to an unexpected origin.");
+        }
+
         for (var attempt = 0; ; attempt++)
         {
             var token = await _identity.AcquireGraphTokenAsync(cancellationToken).ConfigureAwait(false);
@@ -447,6 +485,49 @@ public sealed class GraphAppFolderStore : IAppFolderStore
 
     private static bool IsRetryable(HttpStatusCode status) =>
         status is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
+
+    private string? DeltaPath(JsonElement item)
+    {
+        var name = item.TryGetProperty("name", out var nameElement)
+            ? nameElement.GetString()
+            : null;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        if (!item.TryGetProperty("parentReference", out var parent)
+            || !parent.TryGetProperty("path", out var pathElement))
+        {
+            return Normalize(name);
+        }
+
+        var fullPath = (GraphRelative(pathElement.GetString() ?? "").TrimEnd('/') + "/" + name).TrimStart('/');
+        var root = _approotPath?.Trim('/');
+        if (!string.IsNullOrWhiteSpace(root)
+            && (string.Equals(fullPath, root, StringComparison.Ordinal)
+                || fullPath.StartsWith(root + "/", StringComparison.Ordinal)))
+        {
+            return fullPath[root.Length..].TrimStart('/');
+        }
+
+        foreach (var protocolRoot in new[] { "agents", "commands", "responses", "conversations", "activity", "telemetry" })
+        {
+            var marker = "/" + protocolRoot + "/";
+            var index = ("/" + fullPath).IndexOf(marker, StringComparison.Ordinal);
+            if (index >= 0)
+            {
+                return ("/" + fullPath)[(index + 1)..];
+            }
+        }
+
+        return Normalize(name);
+    }
+
+    private static string GraphRelative(string path) =>
+        path.Contains("root:", StringComparison.Ordinal)
+            ? path[(path.IndexOf("root:", StringComparison.Ordinal) + "root:".Length)..].Trim('/')
+            : path.Trim('/');
 
     private static string QuoteEtag(string etag) =>
         etag.StartsWith('"') ? etag : $"\"{etag}\"";

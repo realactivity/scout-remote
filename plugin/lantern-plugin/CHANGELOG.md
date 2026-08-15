@@ -3,6 +3,20 @@
 Notable changes to the `lantern-bridge` plugin. Versioning follows SemVer,
 as recommended by Agent Plugins 1.0.0 §10.2.
 
+## [0.3.0] (2026-08-15)
+
+### Added
+
+- Graph delta pagination with approot-relative paths, deletion tombstones,
+  and stale-cursor reset behavior.
+
+### Changed
+
+- Create-if-absent Graph writes rely on their conditional PUT and no longer
+  issue a redundant metadata preflight.
+- Graph store tests enforce the two-request cold-start budget (approot plus
+  conditional PUT).
+
 ## [0.2.1] (2026-08-15)
 
 ### Security
