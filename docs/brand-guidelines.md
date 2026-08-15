@@ -97,7 +97,8 @@ The sheet does not depict these states. Proposed mappings, to confirm before use
 | Protocol value | Type | Proposed token |
 |---|---|---|
 | `completed` | `CommandStatus` | `status.idle` (settled / success) |
-| `queued`, `acknowledged`, `running` | `CommandStatus` | `status.working` (in flight) |
+| `acknowledged`, `running` | `CommandStatus` | `status.working` (in flight) |
+| queued (client-derived: command sent, no response file yet; spec v2.0 Appendix A.1 — not a wire value) | client-derived | `status.working` (in flight) |
 | `expired` | `CommandStatus` | `status.offline` (lapsed, non-alarming) |
 | `canceled` | `CommandStatus` | `status.offline` |
 
