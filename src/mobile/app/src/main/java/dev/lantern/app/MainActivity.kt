@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
             }
             LanternTheme(tokens) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    HomeScreen(viewModel, InstantClock.System)
+                    HomeScreen(viewModel)
                 }
             }
         }

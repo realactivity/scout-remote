@@ -28,16 +28,14 @@ import dev.lantern.app.brand.EvidenceMono
 import dev.lantern.app.brand.LocalBrandColors
 import dev.lantern.app.brand.LocalBrandTokens
 import dev.lantern.app.brand.UiFont
-import dev.lantern.app.brand.statusColor
-import dev.lantern.core.application.InstantClock
-import kotlin.time.Duration.Companion.minutes
+import dev.lantern.app.brand.colorOf
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, clock: InstantClock) {
+fun HomeScreen(viewModel: HomeViewModel) {
     val state by viewModel.state.collectAsState()
     val colors = LocalBrandColors.current
     val tokens = LocalBrandTokens.current
-    val pane = colors.statusColor(state.status, clock.now(), 30.minutes)
+    val pane = colors.colorOf(state.pane)
     val agentLabel = when {
         state.status == null -> "unknown"
         state.stale -> "stale"

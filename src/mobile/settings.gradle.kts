@@ -26,6 +26,11 @@ dependencyResolutionManagement {
 rootProject.name = "lantern-mobile"
 
 // :core is pure Kotlin/JVM. No Android APIs (the spec §16.1 guardrail, enforced by
-// module boundary). :app is the Android client (see app/README.md).
+// module boundary). :app is included when an Android SDK is configured so
+// `./gradlew :core:build` still works on machines without the SDK.
 include(":core")
-include(":app")
+val androidHome = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+val localProperties = file("local.properties")
+if (!androidHome.isNullOrBlank() || localProperties.exists()) {
+    include(":app")
+}

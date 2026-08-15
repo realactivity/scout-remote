@@ -7,6 +7,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import dev.lantern.core.brand.StatusToken
+import dev.lantern.core.brand.commandPaneStatus
+import dev.lantern.core.brand.paneStatus
 import dev.lantern.core.domain.AgentState
 import dev.lantern.core.domain.AgentStatus
 import dev.lantern.core.domain.CommandStatus
@@ -67,32 +70,25 @@ val DisplayFont: FontFamily = FontFamily.SansSerif
 /** Product UI. Roboto Flex role; Roboto is native on Android. */
 val UiFont: FontFamily = FontFamily.SansSerif
 
+fun BrandColors.colorOf(token: StatusToken): Color = when (token) {
+    StatusToken.IDLE -> idle
+    StatusToken.WORKING -> working
+    StatusToken.WAITING -> waiting
+    StatusToken.OFFLINE -> offline
+    StatusToken.ERROR -> error
+}
+
 fun BrandColors.statusColor(
     status: AgentStatus?,
     nowUtc: kotlinx.datetime.Instant,
     staleThreshold: Duration,
 ): Color {
-    if (status == null) {
-        return offline
-    }
-    if (status.isStale(staleThreshold, nowUtc) || status.state == AgentState.UNKNOWN) {
-        return offline
-    }
-    return when (status.state) {
-        AgentState.IDLE -> idle
-        AgentState.WORKING -> working
-        AgentState.WAITING_FOR_DESKTOP -> waiting
-        AgentState.UNKNOWN -> offline
-    }
+    val stale = status == null || status.isStale(staleThreshold, nowUtc)
+    return colorOf(paneStatus(status?.state ?: AgentState.UNKNOWN, stale))
 }
 
-fun BrandColors.commandStatusColor(status: CommandStatus): Color = when (status) {
-    CommandStatus.COMPLETED -> idle
-    CommandStatus.ACKNOWLEDGED, CommandStatus.RUNNING -> working
-    CommandStatus.WAITING_FOR_DESKTOP_APPROVAL -> waiting
-    CommandStatus.FAILED -> error
-    CommandStatus.EXPIRED, CommandStatus.CANCELED -> offline
-}
+fun BrandColors.commandStatusColor(status: CommandStatus): Color =
+    colorOf(commandPaneStatus(status))
 
 @Composable
 fun LanternTheme(tokens: BrandTokens, content: @Composable () -> Unit) {

@@ -6,6 +6,9 @@ import dev.lantern.core.application.BridgeSyncService
 import dev.lantern.core.application.CommandService
 import dev.lantern.core.application.InstantClock
 import dev.lantern.core.application.SyncResult
+import dev.lantern.core.brand.StatusToken
+import dev.lantern.core.brand.paneStatus
+import dev.lantern.core.domain.AgentState
 import dev.lantern.core.domain.AgentStatus
 import dev.lantern.core.domain.CommandConstraints
 import dev.lantern.core.domain.CommandType
@@ -23,7 +26,10 @@ data class HomeUiState(
     val lastResponse: RemoteResponse? = null,
     val message: String? = null,
     val sending: Boolean = false,
-)
+) {
+    val pane: StatusToken
+        get() = paneStatus(status?.state ?: AgentState.UNKNOWN, stale)
+}
 
 class HomeViewModel(
     private val commands: CommandService,
@@ -67,14 +73,17 @@ class HomeViewModel(
         }
     }
 
-    private fun applySync(result: SyncResult) {
+    fun applyStatus(status: AgentStatus?, responses: List<RemoteResponse> = emptyList()) {
         val now = clock.now()
-        val status = result.status
         _state.value = _state.value.copy(
             status = status,
             lastSeenUtc = status?.lastSeenUtc?.toString(),
             stale = status?.isStale(staleThreshold, now) ?: true,
-            lastResponse = result.newResponses.lastOrNull() ?: _state.value.lastResponse,
+            lastResponse = responses.lastOrNull() ?: _state.value.lastResponse,
         )
+    }
+
+    private fun applySync(result: SyncResult) {
+        applyStatus(result.status, result.newResponses)
     }
 }
