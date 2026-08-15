@@ -6,9 +6,16 @@
 |---|---|
 | Version | 1.2 |
 | Date | 14 August 2026 |
-| Status | Proposed reference architecture |
+| Status | **Superseded by [design-spec-v2.0.md](design-spec-v2.0.md)** — retained as history |
 
-> This is a faithful markdown conversion of the original document, committed alongside it as the repo's reference architecture. The original PDF ([Scout-Remote-Design-Spec-v1.2.pdf](Scout-Remote-Design-Spec-v1.2.pdf)) is authoritative where they differ.
+> **This document is historical.** The authoritative specification is
+> [design-spec-v2.0.md](design-spec-v2.0.md). This file is a markdown
+> conversion of the original v1.2 document, which was authored under the
+> working name "Scout Remote" ([original PDF](Scout-Remote-Design-Spec-v1.2.pdf)).
+> The conversion was partially rebranded to "Lantern" before v2.0 froze it;
+> in particular, the PDF's protocol identifier is `"scout-remote"` while this
+> conversion says `"lantern"`. v2.0 records `"lantern"` as the decided wire
+> identifier. Do not implement from this file.
 
 **Design intent.** A secure mobile control plane for checking Scout status, reviewing bridge-owned chats and activity, sending bounded instructions, viewing artifacts, and understanding usage — without depending on undocumented Scout internals.
 

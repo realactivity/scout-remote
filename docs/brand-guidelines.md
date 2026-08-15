@@ -98,9 +98,13 @@ The sheet does not depict these states. Proposed mappings, to confirm before use
 |---|---|---|
 | `completed` | `CommandStatus` | `status.idle` (settled / success) |
 | `acknowledged`, `running` | `CommandStatus` | `status.working` (in flight) |
-| queued (client-derived: command sent, no response file yet; spec v2.0 Appendix A.1 — not a wire value) | client-derived | `status.working` (in flight) |
+| queued | client-derived | `status.working` (in flight) |
 | `expired` | `CommandStatus` | `status.offline` (lapsed, non-alarming) |
 | `canceled` | `CommandStatus` | `status.offline` |
+
+Like stale/offline, "queued" is client-derived, never a wire value: a command
+file in the inbox with no response file yet *is* the queued state (spec
+Appendix A.1).
 
 ## Typography
 
