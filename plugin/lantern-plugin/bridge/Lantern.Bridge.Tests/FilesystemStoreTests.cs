@@ -31,6 +31,14 @@ public sealed class FilesystemStoreTests
     }
 
     [Fact]
+    public async Task PathEscapeIsRefused()
+    {
+        using var dir = new TempDir();
+        var store = new FilesystemAppFolderStore(dir.Path);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => store.GetAsync("../secret.json"));
+    }
+
+    [Fact]
     public async Task ListAndDeltaSeeNewFiles()
     {
         using var dir = new TempDir();
