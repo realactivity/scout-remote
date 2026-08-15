@@ -21,10 +21,13 @@ public sealed record RemoteResponse
     public UsageInfo? Usage { get; init; }
 }
 
-/// <summary>Command state machine (spec Appendix A.1).</summary>
+/// <summary>
+/// Wire command status (spec Appendix A.1, response.schema.json).
+/// The client-local "draft" state — an unsent command cached on-device (spec §5, §15) —
+/// deliberately does not appear here: drafts never reach the wire.
+/// </summary>
 public enum CommandStatus
 {
-    Draft,
     Queued,
     Acknowledged,
     Running,
