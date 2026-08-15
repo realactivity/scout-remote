@@ -39,11 +39,13 @@ Do not commit anything this kit writes locally:
 ## Run
 
 ```bash
-python3 -m pip install --user msal requests
+python3 -m pip install --user -r scripts/smoke-tenant/requirements.txt
 export LANTERN_CLIENT_ID="..."
 export LANTERN_TENANT_ID="..."
 python3 scripts/smoke-tenant/smoke.py
 ```
+
+Graph calls retry once on HTTP 429 or 503 using `Retry-After`.
 
 The script signs in once (device code), then uses that session as both the
 desktop and mobile-sim persona. That matches Mode A: one user, two clients,

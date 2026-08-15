@@ -110,7 +110,7 @@ and `PLUGIN_DATA` provided. That loading contract is the entire standard.
 | `write_acknowledgement` | First wire status (`acknowledged`). |
 | `write_response` | Schema-validated write; terminal responses are immutable. |
 | `record_processed_receipt` | Exactly-once receipt. |
-| `read_activity` | Activity events, optional `sinceUtc`. |
+| `read_activity` | Activity events by day folder, optional `sinceUtc`. |
 | `resolve_artifact` | Graph item lookup, or filesystem stand-in. |
 
 ```bash

@@ -66,7 +66,7 @@ def main() -> int:
 
     checklist: list[tuple[str, str]] = []
 
-    approot = requests.get(f"{graph}/me/drive/special/approot", headers=headers, timeout=30)
+    approot = graph_request("GET", f"{graph}/me/drive/special/approot", headers=headers)
     if approot.status_code >= 400:
         checklist.append(("Files.ReadWrite.AppFolder / approot resolve", "FAIL"))
         print(approot.text)
@@ -91,18 +91,18 @@ def main() -> int:
         "nativeScoutChatMirror": False,
         "remoteApprovals": False,
     }
-    put = requests.put(
+    put = graph_request(
+        "PUT",
         f"{graph}/me/drive/special/approot:/protocol.json:/content",
         headers={**headers, "Content-Type": "application/json"},
         data=json.dumps(protocol),
-        timeout=30,
     )
     checklist.append(("desktop persona wrote protocol.json", "PASS" if put.ok else "FAIL"))
 
-    got = requests.get(
+    got = graph_request(
+        "GET",
         f"{graph}/me/drive/special/approot:/protocol.json:/content",
         headers=headers,
-        timeout=30,
     )
     checklist.append(("mobile-sim persona read protocol.json", "PASS" if got.ok else "FAIL"))
 
@@ -117,11 +117,11 @@ def main() -> int:
         "expiresUtc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 4 * 3600)),
         "requestedBy": {"entraObjectId": result.get("id_token_claims", {}).get("oid", "unknown")},
     }
-    inbox = requests.put(
+    inbox = graph_request(
+        "PUT",
         f"{graph}/me/drive/special/approot:/commands/inbox/{command_id}.json:/content",
         headers={**headers, "Content-Type": "application/json"},
         data=json.dumps(command),
-        timeout=30,
     )
     checklist.append(("mobile-sim wrote inbox command", "PASS" if inbox.ok else "FAIL"))
 
@@ -137,6 +137,22 @@ def main() -> int:
     (LOCAL / "last-run.json").write_text(json.dumps({"approot": item.get("id"), "checklist": checklist}, indent=2))
     failed = [row for row in checklist if row[1] == "FAIL"]
     return 1 if failed else 0
+
+
+def graph_request(method: str, url: str, **kwargs):
+    """One Graph call with a single 429/503 Retry-After retry."""
+    import requests
+
+    response = requests.request(method, url, timeout=30, **kwargs)
+    if response.status_code in (429, 503):
+        raw = response.headers.get("Retry-After", "2")
+        try:
+            wait = max(int(raw), 1)
+        except ValueError:
+            wait = 2
+        time.sleep(wait)
+        response = requests.request(method, url, timeout=30, **kwargs)
+    return response
 
 
 def print_checklist(rows: list[tuple[str, str]]) -> None:

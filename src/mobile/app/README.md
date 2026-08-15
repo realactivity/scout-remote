@@ -22,8 +22,15 @@ in [docs/mobile-framework-kotlin.md](../../../docs/mobile-framework-kotlin.md).
 ( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
 ```
 
-`BrandTokensTest` asserts every semantic hex equals the tokens file. No
-emulator is required.
+`copyBrandTokens` copies [`docs/brand-tokens.json`](../../../docs/brand-tokens.json)
+into generated `assets/` and `test/resources/` (gitignored).
+`BrandTokensTest` and `BrandThemeSourceTest` assert those copies match the
+docs file. `HomeViewModelTest` asserts a stale `lastSeenUtc` maps the pane
+to offline. No emulator is required.
+
+`:app` is included only when `ANDROID_HOME` / `ANDROID_SDK_ROOT` is set or
+`src/mobile/local.properties` exists, so `./gradlew :core:build` still
+works on machines without the Android SDK.
 
 ## Rules for this module
 

@@ -128,6 +128,7 @@ lantern/
 │       └── bridge/Lantern.Bridge/
 ├── scripts/
 │   ├── smoke-e2e/                 Cross-language harness (CI)
+│   ├── smoke-mcp/                 Optional stdio MCP helper (CI uses the .NET test)
 │   └── smoke-tenant/              Real Graph kit (human-gated, NEVER-COMMIT .local/)
 ├── .github/workflows/ci.yml       CI: contracts, .NET, Kotlin, Android, e2e, MCP smoke
 ├── global.json                    .NET SDK pin (10.0, latestFeature) + MTP test runner
@@ -187,6 +188,9 @@ dotnet test --solution Lantern.sln -c Release --no-build
 
 # Cross-language e2e (Kotlin client + Lantern.Bridge --once)
 scripts/smoke-e2e/run.sh
+
+# Optional MCP helper (same assertions as McpStdioSmokeTests)
+python3 scripts/smoke-mcp/run.py
 
 # Contracts: validate the golden examples against the JSON Schemas
 python3 contracts/validate_examples.py   # pip install jsonschema

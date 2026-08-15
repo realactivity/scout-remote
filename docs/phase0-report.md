@@ -11,7 +11,7 @@ process.
 | Claim | Evidence |
 |---|---|
 | Contract golden files still round-trip on both sides | `ContractGoldenFileTests` (.NET), `ContractGoldenFileTest` (Kotlin), `python3 contracts/validate_examples.py` |
-| Filesystem App Folder store: create-if-absent, ETag, delta | `FilesystemStoreTests` |
+| Filesystem App Folder store: create-if-absent, ETag, delta, path escape | `FilesystemStoreTests`, `FilesystemAppFolderStoreTest` |
 | One command, exactly once, ack then complete | `InboxProcessorTests.ProcessOnceAcknowledgesThenCompletesExactlyOnce`, `CrossLanguageSmokeTest` |
 | Expired command: `expired` disposition, never executed | `InboxProcessorTests.ExpiredCommandGetsExpiredDispositionAndNeverExecutes` |
 | Replay / duplicate inbox file skipped | `InboxProcessorTests.ReplayAfterReceiptIsSkipped` |
@@ -20,7 +20,9 @@ process.
 | No secrets in the harness approot after a run | `InboxProcessorTests.NoSecretsInApprootAfterProcess`, e2e sweep |
 | MCP stdio: initialize, list tools, `publish_status`, `read_inbox`, no credentials | `McpStdioSmokeTests` |
 | Kotlin `CommandService` / `BridgeSyncService` / ULID / protocol gate | `CommandServiceTest`, `BridgeSyncServiceTest`, `UlidTest` |
-| Android app compiles; theme hexes come from `docs/brand-tokens.json` | `:app:assembleDebug`, `BrandTokensTest` |
+| Activity day-folder reads and `paneStatus` mapping | `GraphBridgeTransportTest`, `dev.lantern.core.brand.BrandTokensTest` |
+| Android app compiles; theme hexes come from `docs/brand-tokens.json` | `:app:assembleDebug`, `BrandTokensTest`, `BrandThemeSourceTest` |
+| Home stale `lastSeenUtc` maps the pane to offline | `HomeViewModelTest` |
 
 ## Human-gated (not run in CI)
 
@@ -47,7 +49,11 @@ scripts/smoke-e2e/run.sh
 # Android app + theme unit tests (CI job android)
 ( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
 
+# Optional MCP helper (CI still uses McpStdioSmokeTests)
+python3 scripts/smoke-mcp/run.py
+
 # Real tenant (human only)
+python3 -m pip install --user -r scripts/smoke-tenant/requirements.txt
 python3 scripts/smoke-tenant/smoke.py
 ```
 
