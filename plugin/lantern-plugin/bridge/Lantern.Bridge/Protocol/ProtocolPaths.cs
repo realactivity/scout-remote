@@ -21,6 +21,11 @@ public static class ProtocolPaths
     public static string ConversationEvent(string conversationId, string eventId) =>
         $"{Conversations}/{conversationId}/{eventId}.json";
 
+    public static string ActivityFolder(DateTimeOffset occurredUtc) =>
+        $"{Activity}/{occurredUtc.ToUniversalTime():yyyy-MM-dd}";
+
+    public static string ActivityFolder(string day) => $"{Activity}/{day}";
+
     public static string ActivityEvent(DateTimeOffset occurredUtc, string eventId) =>
-        $"{Activity}/{occurredUtc.ToUniversalTime():yyyy-MM-dd}/{eventId}.json";
+        $"{ActivityFolder(occurredUtc)}/{eventId}.json";
 }

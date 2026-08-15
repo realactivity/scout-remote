@@ -19,8 +19,8 @@ import kotlinx.serialization.json.longOrNull
 
 /**
  * Microsoft Graph backend against /me/drive/special/approot. Create-if-absent
- * is keyed on commandId. Mutable writes send If-Match. 429 responses honor
- * Retry-After. Exercised by the real-tenant smoke kit, not by CI.
+ * is keyed on commandId. Mutable writes send If-Match. 429 and 503 responses
+ * honor Retry-After. Exercised by the real-tenant smoke kit, not by CI.
  */
 class GraphAppFolderStore(
     private val tokenProvider: suspend () -> String,
@@ -229,7 +229,7 @@ class GraphAppFolderStore(
             val response = withContext(Dispatchers.IO) {
                 http.send(request, HttpResponse.BodyHandlers.ofByteArray())
             }
-            if (response.statusCode() != 429 || attempt >= maxRetries) {
+            if ((response.statusCode() != 429 && response.statusCode() != 503) || attempt >= maxRetries) {
                 return response
             }
             val retryAfter = response.headers().firstValue("Retry-After").orElse(null)

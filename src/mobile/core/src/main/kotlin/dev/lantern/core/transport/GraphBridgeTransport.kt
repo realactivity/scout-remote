@@ -11,7 +11,12 @@ import dev.lantern.core.domain.RemoteCommand
 import dev.lantern.core.domain.RemoteResponse
 import dev.lantern.core.storage.AppFolderStore
 import dev.lantern.core.storage.GraphAppFolderStore
+import dev.lantern.core.storage.ProtocolPaths
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlinx.serialization.encodeToString
 
 /**
@@ -20,58 +25,53 @@ import kotlinx.serialization.encodeToString
  * - ETags/If-Match for mutable files: status and in-flight responses (spec §15.1).
  * - Enqueue uses create-if-absent keyed on commandId so retries cannot duplicate.
  * - Protocol handshake is read before other files when present.
+ * - Activity reads walk `activity/{yyyy-MM-dd}/` day folders (contracts/README.md).
  */
 class GraphBridgeTransport(
     private val store: AppFolderStore,
+    private val clock: () -> Instant = { Clock.System.now() },
 ) : BridgeTransport {
 
     private val json = ProtocolJson.json
 
     override suspend fun readProtocol(): ProtocolManifest? {
-        val item = store.get(PROTOCOL) ?: return null
+        val item = store.get(ProtocolPaths.PROTOCOL) ?: return null
         val text = item.content?.decodeToString() ?: return null
         return json.decodeFromString<ProtocolManifest>(text)
     }
 
     override suspend fun readStatus(agentId: String): AgentStatus? {
-        val item = store.get("agents/$agentId/status.json") ?: return null
+        val item = store.get(ProtocolPaths.status(agentId)) ?: return null
         val text = item.content?.decodeToString() ?: return null
         return json.decodeFromString<AgentStatus>(text)
     }
 
     override suspend fun enqueueCommand(command: RemoteCommand) {
-        val path = "commands/inbox/${command.commandId}.json"
         val bytes = json.encodeToString(command).encodeToByteArray()
-        store.createIfAbsent(path, bytes)
+        store.createIfAbsent(ProtocolPaths.inboxCommand(command.commandId), bytes)
     }
 
     override suspend fun readResponse(commandId: String): RemoteResponse? {
-        val item = store.get("responses/$commandId.json") ?: return null
+        val item = store.get(ProtocolPaths.response(commandId)) ?: return null
         val text = item.content?.decodeToString() ?: return null
         return json.decodeFromString<RemoteResponse>(text)
     }
 
     override suspend fun readConversationEvents(conversationId: String): List<ConversationEvent> {
-        val listed = store.list("conversations/$conversationId")
+        val listed = store.list(ProtocolPaths.conversationFolder(conversationId))
         return listed
             .filter { it.path.endsWith(".json") }
-            .mapNotNull { item ->
-                val file = store.get(item.path) ?: return@mapNotNull null
-                val text = file.content?.decodeToString() ?: return@mapNotNull null
-                runCatching { json.decodeFromString<ConversationEvent>(text) }.getOrNull()
-            }
+            .mapNotNull { item -> decodeJson<ConversationEvent>(item.path) }
             .sortedBy { it.eventId }
     }
 
     override suspend fun readActivity(sinceUtc: Instant): List<ActivityEvent> {
-        val listed = store.list("activity")
-        return listed
+        val start = ProtocolPaths.activityDay(sinceUtc)
+        val end = ProtocolPaths.activityDay(clock())
+        return daysInclusive(start, end)
+            .flatMap { day -> store.list(ProtocolPaths.activityFolder(day)) }
             .filter { it.path.endsWith(".json") }
-            .mapNotNull { item ->
-                val file = store.get(item.path) ?: return@mapNotNull null
-                val text = file.content?.decodeToString() ?: return@mapNotNull null
-                runCatching { json.decodeFromString<ActivityEvent>(text) }.getOrNull()
-            }
+            .mapNotNull { item -> decodeJson<ActivityEvent>(item.path) }
             .filter { it.occurredUtc >= sinceUtc }
             .sortedBy { it.eventId }
     }
@@ -98,7 +98,28 @@ class GraphBridgeTransport(
         )
     }
 
+    private suspend inline fun <reified T> decodeJson(path: String): T? {
+        val file = store.get(path) ?: return null
+        val text = file.content?.decodeToString() ?: return null
+        return runCatching { json.decodeFromString<T>(text) }.getOrNull()
+    }
+
     companion object {
-        const val PROTOCOL: String = "protocol.json"
+        const val PROTOCOL: String = ProtocolPaths.PROTOCOL
+
+        internal fun daysInclusive(startDay: String, endDay: String): List<String> {
+            val start = LocalDate.parse(startDay)
+            val end = LocalDate.parse(endDay)
+            if (end < start) {
+                return emptyList()
+            }
+            val days = mutableListOf<String>()
+            var current = start
+            while (current <= end) {
+                days += current.toString()
+                current = current.plus(1, DateTimeUnit.DAY)
+            }
+            return days
+        }
     }
 }

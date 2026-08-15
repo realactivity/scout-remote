@@ -7,8 +7,8 @@ namespace Lantern.Bridge.Storage;
 
 /// <summary>
 /// Microsoft Graph backend against /me/drive/special/approot. Create-if-absent
-/// is keyed on commandId. Mutable writes send If-Match. 429 responses honor
-/// Retry-After. Exercised by the real-tenant smoke kit, not by CI.
+/// is keyed on commandId. Mutable writes send If-Match. 429 and 503 responses
+/// honor Retry-After. Exercised by the real-tenant smoke kit, not by CI.
 /// </summary>
 public sealed class GraphAppFolderStore : IAppFolderStore
 {
@@ -345,7 +345,7 @@ public sealed class GraphAppFolderStore : IAppFolderStore
             }
 
             var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            if (response.StatusCode != (HttpStatusCode)429 || attempt >= _maxRetries)
+            if (!IsRetryable(response.StatusCode) || attempt >= _maxRetries)
             {
                 return response;
             }
@@ -416,6 +416,9 @@ public sealed class GraphAppFolderStore : IAppFolderStore
 
         return DateTimeOffset.UtcNow;
     }
+
+    private static bool IsRetryable(HttpStatusCode status) =>
+        status is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
 
     private static string QuoteEtag(string etag) =>
         etag.StartsWith('"') ? etag : $"\"{etag}\"";

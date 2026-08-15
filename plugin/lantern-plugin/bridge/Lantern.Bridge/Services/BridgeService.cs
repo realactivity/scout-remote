@@ -204,21 +204,19 @@ public sealed class BridgeService
 
     public async Task<IReadOnlyList<ActivityEvent>> ReadActivityAsync(DateTimeOffset? sinceUtc, CancellationToken cancellationToken = default)
     {
-        var listed = await _store.ListAsync(ProtocolPaths.Activity, cancellationToken).ConfigureAwait(false);
         var events = new List<ActivityEvent>();
-        foreach (var item in listed.Where(i => i.Path.EndsWith(".json", StringComparison.OrdinalIgnoreCase)))
+        foreach (var path in await ActivityPathsAsync(sinceUtc, cancellationToken).ConfigureAwait(false))
         {
-            var file = await _store.GetAsync(item.Path, cancellationToken).ConfigureAwait(false);
+            var file = await _store.GetAsync(path, cancellationToken).ConfigureAwait(false);
             if (file?.Content is null)
             {
                 continue;
             }
 
-            var json = Encoding.UTF8.GetString(file.Content);
             ActivityEvent? parsed;
             try
             {
-                parsed = JsonSerializer.Deserialize<ActivityEvent>(json, ProtocolJson.Options);
+                parsed = JsonSerializer.Deserialize<ActivityEvent>(Encoding.UTF8.GetString(file.Content), ProtocolJson.Options);
             }
             catch (JsonException)
             {
@@ -239,6 +237,32 @@ public sealed class BridgeService
         }
 
         return events.OrderBy(e => e.EventId, StringComparer.Ordinal).ToList();
+    }
+
+    private async Task<IReadOnlyList<string>> ActivityPathsAsync(DateTimeOffset? sinceUtc, CancellationToken cancellationToken)
+    {
+        if (sinceUtc is null)
+        {
+            var listed = await _store.ListAsync(ProtocolPaths.Activity, cancellationToken).ConfigureAwait(false);
+            return listed
+                .Where(i => i.Path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                .Select(i => i.Path)
+                .ToList();
+        }
+
+        var paths = new List<string>();
+        var start = DateOnly.FromDateTime(sinceUtc.Value.UtcDateTime);
+        var end = DateOnly.FromDateTime(_clock().UtcDateTime);
+        for (var day = start; day <= end; day = day.AddDays(1))
+        {
+            var listed = await _store.ListAsync(ProtocolPaths.ActivityFolder(day.ToString("yyyy-MM-dd")), cancellationToken)
+                .ConfigureAwait(false);
+            paths.AddRange(listed
+                .Where(i => i.Path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                .Select(i => i.Path));
+        }
+
+        return paths;
     }
 
     public async Task<ArtifactDetails?> ResolveArtifactAsync(string driveItemId, CancellationToken cancellationToken = default)
