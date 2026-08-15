@@ -26,4 +26,13 @@ public sealed class GraphBridgeTransport : IBridgeTransport
 
     public Task<RemoteResponse?> ReadResponseAsync(string commandId, CancellationToken cancellationToken) =>
         throw new NotImplementedException("Phase 0: implement against Microsoft Graph App Folder.");
+
+    public Task<IReadOnlyList<ConversationEvent>> ReadConversationEventsAsync(string conversationId, CancellationToken cancellationToken) =>
+        throw new NotImplementedException("Phase 1: implement against Microsoft Graph App Folder.");
+
+    public Task<IReadOnlyList<ActivityEvent>> ReadActivityAsync(DateTimeOffset sinceUtc, CancellationToken cancellationToken) =>
+        throw new NotImplementedException("Phase 1: implement against Microsoft Graph App Folder.");
+
+    public Task<ArtifactDetails?> ResolveArtifactAsync(string driveItemId, CancellationToken cancellationToken) =>
+        throw new NotImplementedException("Phase 1: implement against Microsoft Graph App Folder.");
 }

@@ -62,7 +62,7 @@ Key decisions (see spec §1 and §3–§7 for full rationale):
 scout-remote/
 ├── docs/                             Reference architecture (spec v1.2: markdown + original PDF)
 ├── contracts/                        Shared bridge-protocol contracts (JSON Schema + examples)
-│   ├── schemas/                      protocol / status / command / response / usage schemas
+│   ├── schemas/                      protocol / status / command / response / conversation-event / activity-event / usage schemas
 │   └── examples/                     Canonical payloads from the spec
 ├── src/
 │   ├── shared/                       Cross-platform .NET libraries — NO Android/iOS APIs allowed here

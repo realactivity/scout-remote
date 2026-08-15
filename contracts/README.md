@@ -22,7 +22,9 @@ approot/
 ├── commands/inbox/{commandId}.json  → schemas/command.schema.json
 ├── commands/processed/              (idempotency receipts)
 ├── responses/{commandId}.json       → schemas/response.schema.json
-├── conversations/{conversationId}/  (append-only event streams)
-├── activity/
+├── conversations/{conversationId}/
+│   └── {eventId}.json               → schemas/conversation-event.schema.json (append-only)
+├── activity/{yyyy-MM-dd}/
+│   └── {eventId}.json               → schemas/activity-event.schema.json (append-only)
 └── telemetry/usage-daily.json       → schemas/usage-daily.schema.json
 ```
