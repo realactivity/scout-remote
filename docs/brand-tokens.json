@@ -1,0 +1,47 @@
+{
+  "$comment": "Machine-readable brand tokens for the lantern mobile client. Source of truth is docs/lantern-brand-sheet.svg; every hex here appears verbatim in that file. Consumed by the future Android Compose theme (src/mobile/app). Human guidance and provenance: docs/brand-guidelines.md.",
+  "brand": {
+    "name": "lantern",
+    "tagline": "Signals, not vibes.",
+    "descriptor": "A mobile companion for Microsoft Scout",
+    "lockup": "lantern for Microsoft Scout",
+    "productOf": "Microsoft Scout companion (nominative use; verify against Microsoft trademark guidelines)"
+  },
+  "color": {
+    "core": {
+      "midnight": { "hex": "#0D1826", "role": "app background / canvas" },
+      "steeple": { "hex": "#16273B", "role": "raised surface, cards, app-icon tile" },
+      "bone": { "hex": "#EDE6D6", "role": "primary text and foreground marks" },
+      "candle": { "hex": "#FFC96B", "role": "brand accent, primary emphasis, lantern flame" }
+    },
+    "status": {
+      "$comment": "Semantic agent/command status. Defined by the brand sheet PALETTE row.",
+      "idle": { "hex": "#4CAF7D", "label": "Idle" },
+      "working": { "hex": "#5B9BD9", "label": "Working" },
+      "waiting": { "hex": "#E8961E", "label": "Waiting / Needs desktop" },
+      "offline": { "hex": "#7C8794", "label": "Offline / stale" },
+      "error": { "hex": "#E05252", "label": "Error" }
+    },
+    "support": {
+      "$comment": "Structural tints read from the sheet artwork; present but not formally named on the sheet. Kept here so the theme has a single source.",
+      "cardFill": { "hex": "#142334", "role": "status card / inset panel fill" },
+      "hairline": { "hex": "#223247", "role": "dividers, card borders" },
+      "tileStroke": { "hex": "#26384F", "role": "elevated icon-tile stroke" },
+      "swatchStroke": { "hex": "#2A3B52", "role": "outlined swatch on Midnight" },
+      "flameMuted": { "hex": "#33404F", "role": "offline lantern flame (desaturated)" },
+      "textSecondary": { "hex": "#7C8794", "role": "secondary/caption text" },
+      "textLabel": { "hex": "#6E7B8C", "role": "eyebrow / section labels" },
+      "textBody": { "hex": "#B9C2CE", "role": "muted body text" }
+    }
+  },
+  "typography": {
+    "display": { "family": "Space Grotesk", "role": "display and wordmark", "tracking": "tight (-1 to -2 on the wordmark)", "weight": 700 },
+    "ui": { "family": "Roboto Flex", "role": "product UI; native on Android" },
+    "mono": { "family": "IBM Plex Mono", "role": "evidence: timestamps, IDs, protocol values", "accent": "#FFC96B" }
+  },
+  "iconography": {
+    "mark": "lantern (arched handle, rounded body, inner flame pane)",
+    "principle": "The pane is the status: the inner flame is recolored to the semantic status token. Offline desaturates the whole mark to color.status.offline / color.support.flameMuted.",
+    "cornerRadius": { "appIcon": 42, "tile": 14 }
+  }
+}
