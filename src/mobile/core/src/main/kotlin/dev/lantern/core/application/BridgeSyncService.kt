@@ -19,6 +19,19 @@ interface BridgeSyncService {
     suspend fun refreshForeground(): SyncResult
 
     suspend fun refreshBackground(): SyncResult
+
+    /**
+     * Foreground in-flight watch (spec §16.2). Polls one command's response
+     * starting at [initialDelay] and backing off exponentially toward
+     * [maxDelay]. Stops on terminal status or when [isForeground] is false.
+     */
+    suspend fun watchInFlight(
+        commandId: String,
+        isForeground: () -> Boolean,
+        initialDelay: kotlin.time.Duration = kotlin.time.Duration.parse("15s"),
+        maxDelay: kotlin.time.Duration = kotlin.time.Duration.parse("60s"),
+        delay: suspend (kotlin.time.Duration) -> Unit = { kotlinx.coroutines.delay(it) },
+    ): RemoteResponse?
 }
 
 data class SyncResult(
