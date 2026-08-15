@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/protocol.schema.json",
+  "title": "Scout Remote protocol handshake (protocol.json)",
+  "description": "Bridge-published handshake declaring protocol version and capabilities. Spec section 6.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "version", "agentId", "bridgeVersion", "capabilities"],
+  "properties": {
+    "protocol": { "const": "scout-remote" },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Protocol major.minor. Consumers must stop processing an incompatible major version."
+    },
+    "agentId": { "type": "string", "minLength": 1 },
+    "bridgeVersion": { "type": "string", "minLength": 1 },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "status.read",
+          "activity.read",
+          "message.send",
+          "summary.request",
+          "artifacts.read"
+        ]
+      }
+    },
+    "nativeScoutChatMirror": {
+      "type": "boolean",
+      "default": false,
+      "description": "Feature-flagged optional adapter; never an MVP dependency (spec 8.2)."
+    },
+    "remoteApprovals": {
+      "type": "boolean",
+      "const": false,
+      "description": "No remote approval capability in MVP; approvals stay on the desktop (spec 11)."
+    }
+  }
+}

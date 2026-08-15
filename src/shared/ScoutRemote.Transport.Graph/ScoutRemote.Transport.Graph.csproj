@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Graph App Folder implementation of IBridgeTransport. The only project that talks to Microsoft Graph on the mobile side.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ScoutRemote.Domain/ScoutRemote.Domain.csproj" />
+    <ProjectReference Include="../ScoutRemote.Application/ScoutRemote.Application.csproj" />
+  </ItemGroup>
+  <!-- Phase 0: add Microsoft.Graph + Microsoft.Identity.Client PackageReferences when the
+       Entra app registration exists and tenant App Folder support is validated (spec §3). -->
+</Project>

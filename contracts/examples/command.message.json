@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "commandId": "01J5R9Q8C5R0E6Y2M4P7K2P9AP",
+  "conversationId": "remote-2026-08-13",
+  "type": "message",
+  "createdUtc": "2026-08-13T22:40:00Z",
+  "expiresUtc": "2026-08-14T02:40:00Z",
+  "requestedBy": { "entraObjectId": "00000000-0000-0000-0000-000000000000" },
+  "text": "Give me a concise status update and link the latest artifact.",
+  "constraints": {
+    "maxWorkIqCalls": 1,
+    "allowSensitiveActions": false
+  }
+}

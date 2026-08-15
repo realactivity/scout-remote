@@ -1,0 +1,16 @@
+{
+  "date": "2026-08-13",
+  "commands": 14,
+  "workIqCalls": 3,
+  "modelUsage": [
+    {
+      "provider": "custom",
+      "model": "grok-4.6",
+      "inputTokens": 82000,
+      "outputTokens": 12000,
+      "estimatedUsdPerMillionTokens": 2.00,
+      "pricingSource": "user-configured"
+    }
+  ],
+  "estimatedTotalUsd": 0.19
+}

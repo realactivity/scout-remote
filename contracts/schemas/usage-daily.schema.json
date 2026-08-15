@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/usage-daily.schema.json",
+  "title": "Daily usage aggregate (telemetry/usage-daily.json)",
+  "description": "Illustrative usage/cost aggregate — never authoritative vendor billing data. Never contains tokens, prompts, or credentials. Spec section 13.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["date", "commands"],
+  "properties": {
+    "date": { "type": "string", "format": "date" },
+    "commands": { "type": "integer", "minimum": 0 },
+    "workIqCalls": { "type": "integer", "minimum": 0 },
+    "failures": { "type": "integer", "minimum": 0 },
+    "modelUsage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["provider", "model"],
+        "properties": {
+          "provider": { "type": "string" },
+          "model": { "type": "string" },
+          "inputTokens": { "type": ["integer", "null"], "minimum": 0 },
+          "outputTokens": { "type": ["integer", "null"], "minimum": 0 },
+          "estimatedUsdPerMillionTokens": { "type": ["number", "null"], "minimum": 0 },
+          "pricingSource": {
+            "type": "string",
+            "enum": ["user-configured", "metering-api"],
+            "description": "Estimated spend is user-configured unless an authoritative metering API is available."
+          }
+        }
+      }
+    },
+    "estimatedTotalUsd": { "type": ["number", "null"], "minimum": 0 }
+  }
+}

@@ -1,0 +1,33 @@
+# .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+.vs/
+artifacts/
+TestResults/
+*.binlog
+
+# MAUI / Android
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+.gradle/
+local.properties
+
+# iOS (Phase 4)
+*.ipa
+xcuserdata/
+
+# IDE
+.idea/
+*.swp
+.DS_Store
+
+# Local secrets — never commit tokens, keys, or MSAL caches
+*.pfx
+*.snk
+appsettings.local.json
+msal_cache*

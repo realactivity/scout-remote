@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/response.schema.json",
+  "title": "Command response (responses/{commandId}.json)",
+  "description": "Bridge-to-mobile response. A completed response is immutable; later corrections are new events referencing the original command. Spec sections 7, 15.1, Appendix A.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commandId", "status"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "commandId": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "acknowledged",
+        "running",
+        "completed",
+        "failed",
+        "expired",
+        "waiting_for_desktop_approval",
+        "canceled"
+      ]
+    },
+    "startedUtc": { "type": "string", "format": "date-time" },
+    "completedUtc": { "type": "string", "format": "date-time" },
+    "message": { "type": "string" },
+    "attentionReason": {
+      "type": "string",
+      "description": "Required context when status is waiting_for_desktop_approval: exactly what the user must do on the desktop."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "driveItemId"],
+        "properties": {
+          "name": { "type": "string" },
+          "driveItemId": {
+            "type": "string",
+            "description": "OneDrive driveItem reference; artifacts are referenced by ID, never inlined (spec 11.1)."
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workIqCalls": { "type": "integer", "minimum": 0 },
+        "modelTokens": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

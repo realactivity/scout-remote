@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "scout-remote-bridge": {
+      "command": "dotnet",
+      "args": ["run", "--project", "${PLUGIN_DIR}/bridge/ScoutRemote.Bridge"],
+      "env": {
+        "SCOUT_REMOTE_AGENT_ID": "primary"
+      }
+    }
+  }
+}
