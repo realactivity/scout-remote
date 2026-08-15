@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/conversation-event.schema.json",
+  "title": "Conversation event (conversations/{conversationId}/{eventId}.json)",
+  "description": "Append-only bridge-owned remote-thread event. Immutable once written; corrections are new events referencing the original commandId. The thread is reproducible from protocol data: command and response events reference their protocol files by commandId instead of duplicating content. Spec section 8.1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "conversationId", "type", "occurredUtc"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID; unique and time-sortable — the stream is ordered by eventId."
+    },
+    "conversationId": { "type": "string", "minLength": 1 },
+    "type": {
+      "type": "string",
+      "enum": ["command", "response", "artifact", "attention"]
+    },
+    "occurredUtc": { "type": "string", "format": "date-time" },
+    "commandId": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "For command/response events: the protocol file holding the content (commands/inbox or responses)."
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "driveItemId"],
+      "properties": {
+        "name": { "type": "string" },
+        "driveItemId": {
+          "type": "string",
+          "description": "OneDrive driveItem reference; artifacts are referenced by ID, never inlined (spec 11.1)."
+        }
+      }
+    },
+    "attentionReason": {
+      "type": "string",
+      "description": "For attention events: exactly what the user must do on the desktop."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "enum": ["command", "response"] } }, "required": ["type"] },
+      "then": { "required": ["commandId"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "artifact" } }, "required": ["type"] },
+      "then": { "required": ["artifact"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "attention" } }, "required": ["type"] },
+      "then": { "required": ["attentionReason"] }
+    }
+  ]
+}

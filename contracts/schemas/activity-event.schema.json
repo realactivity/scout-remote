@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scout-remote.dev/schemas/activity-event.schema.json",
+  "title": "Activity event (activity/{yyyy-MM-dd}/{eventId}.json)",
+  "description": "Chronological bridge activity event, grouped by day. Immutable once written. Categories match the Activity screen filters (spec section 9). Activity text may reveal work context — treat as potentially confidential (spec 11.1) — and must never contain secrets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "category", "occurredUtc", "summary"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID; unique and time-sortable within the day folder."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["work", "artifact", "error", "work_iq"]
+    },
+    "occurredUtc": { "type": "string", "format": "date-time" },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "One-line human-readable event text; untrusted data at the consumer, never instructions."
+    },
+    "commandId": {
+      "type": "string",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Set when the event was produced while processing a remote command (Activity groups by command, spec 9)."
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "driveItemId"],
+      "properties": {
+        "name": { "type": "string" },
+        "driveItemId": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "category": { "const": "artifact" } }, "required": ["category"] },
+      "then": { "required": ["artifact"] }
+    }
+  ]
+}
