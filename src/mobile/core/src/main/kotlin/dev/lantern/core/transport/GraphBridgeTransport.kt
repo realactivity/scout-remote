@@ -73,17 +73,30 @@ class GraphBridgeTransport(
         val effectiveSince = maxOf(sinceUtc, now - 30.days)
         val start = ProtocolPaths.activityDay(effectiveSince)
         val end = ProtocolPaths.activityDay(now)
-        var candidates = syncState.cachedFiles(ProtocolPaths.ACTIVITY)
+        val cursorPresent = syncState.deltaCursor() != null
+        val cachedActivity = syncState.cachedFiles(ProtocolPaths.ACTIVITY)
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"A,B","location":"GraphBridgeTransport.kt:readActivity-entry","message":"activity cache before selection","data":{"cursorPresent":$cursorPresent,"cachedCount":${cachedActivity.size}},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
+        var candidates = cachedActivity
             .filter { it.lastModifiedUtc >= effectiveSince }
-        if (candidates.isEmpty() && syncState.deltaCursor() == null) {
+        val fallbackToListing = candidates.isEmpty() && !cursorPresent
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"A,B","location":"GraphBridgeTransport.kt:readActivity-branch","message":"activity candidate branch","data":{"filteredCount":${candidates.size},"fallbackToListing":$fallbackToListing},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
+        if (fallbackToListing) {
             candidates = daysInclusive(start, end)
                 .flatMap { day -> listedAsCache(ProtocolPaths.activityFolder(day)) }
         }
-        return candidates
+        val decoded = candidates
             .filter { it.path.endsWith(".json") }
             .mapNotNull { item -> readImmutableJson<ActivityEvent>(item) }
             .filter { it.occurredUtc >= effectiveSince }
             .sortedBy { it.eventId }
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"B,D","location":"GraphBridgeTransport.kt:readActivity-exit","message":"activity decode result","data":{"candidateCount":${candidates.size},"decodedCount":${decoded.size}},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
+        return decoded
     }
 
     override suspend fun resolveArtifact(driveItemId: String): ArtifactDetails? {
@@ -109,7 +122,14 @@ class GraphBridgeTransport(
     }
 
     override suspend fun applyDelta(): DeltaApplyResult {
-        val page = store.listDelta(syncState.deltaCursor())
+        val existingCursor = syncState.deltaCursor()
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"A","location":"GraphBridgeTransport.kt:applyDelta-entry","message":"delta request","data":{"cursorPresent":${existingCursor != null}},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
+        val page = store.listDelta(existingCursor)
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"A,C","location":"GraphBridgeTransport.kt:applyDelta-page","message":"delta page received","data":{"itemCount":${page.items.size},"activityItemCount":${page.items.count { it.path.startsWith(ProtocolPaths.ACTIVITY + "/") }},"deletionCount":${page.deletions.size},"reset":${page.reset},"completeSnapshot":${page.completeSnapshot}},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
         if (page.reset) {
             syncState.clearCachedFiles()
         }
@@ -127,6 +147,9 @@ class GraphBridgeTransport(
             syncState.putCachedFile(item.toCache())
         }
         syncState.setDeltaCursor(page.cursor)
+        // #region agent log
+        java.io.File("/opt/cursor/logs/debug.log").appendText("""{"hypothesisId":"A","location":"GraphBridgeTransport.kt:applyDelta-exit","message":"delta cache updated","data":{"cachedCount":${syncState.cachedFiles("").size},"activityCachedCount":${syncState.cachedFiles(ProtocolPaths.ACTIVITY).size},"cursorPresent":${page.cursor != null}},"timestamp":${System.currentTimeMillis()}}""" + "\n")
+        // #endregion
         return DeltaApplyResult(page.items.size, page.deletions.size, page.reset)
     }
 
