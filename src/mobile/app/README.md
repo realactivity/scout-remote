@@ -15,8 +15,7 @@ templates so the scaffold matches the toolchain actually in use.
    add `include(":app")` to [`../settings.gradle.kts`](../settings.gradle.kts).
 2. Add `implementation(project(":core"))` plus MSAL Android
    (`com.microsoft.identity.client:msal`) once the Entra app registration
-   exists (spec §3, and the week-one App Folder scope validation of the latency
-   addendum).
+   exists (spec §3, and the week-one App Folder scope validation of spec §19).
 
 ## Rules for this module
 
@@ -40,8 +39,8 @@ templates so the scaffold matches the toolchain actually in use.
 - Screens (spec §9) are Home, Activity, Chats, Artifacts, Automations, Usage,
   and Settings. Home must always show explicit freshness (`lastSeenUtc`).
   Never show "online" without evidence.
-- Foreground sync uses the in-flight watch mode of the latency addendum. Poll
-  an in-flight command's response on a short interval, back off exponentially,
+- Foreground sync uses the in-flight watch mode of spec §16.2. Poll an
+  in-flight command's response on a short interval, back off exponentially,
   and stop on terminal status or when backgrounded.
 - Exit bar for Phase 1. A signed release build ready for Google Play
   internal/closed testing, plus the device-level acceptance and security tests

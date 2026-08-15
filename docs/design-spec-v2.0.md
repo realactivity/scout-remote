@@ -86,7 +86,7 @@ Lantern is a companion experience, not a replacement for the Scout desktop clien
 
 ## 3. Current Microsoft platform assumptions
 
-The design is grounded in Microsoft documentation available as of 14 August 2026. Scout is a Frontier product and Agent Plugins 1.0 is newly published, so production implementation should re-validate these assumptions at build time.
+The design is grounded in Microsoft documentation available as of 15 August 2026. Scout is a Frontier product and Agent Plugins 1.0 is newly published, so production implementation should re-validate these assumptions at build time.
 
 | Assumption | Design impact |
 |---|---|
