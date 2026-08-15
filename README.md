@@ -19,9 +19,9 @@ UX specs are in [`docs/brand-guidelines.md`](docs/brand-guidelines.md).
 > ([`docs/phase0-report.md`](docs/phase0-report.md)).
 >
 > **Authoritative design** [`docs/design-spec-v2.0.md`](docs/design-spec-v2.0.md).
-> The v1.2 pair ([markdown](docs/design-spec-v1.2.md),
-> [original PDF](docs/Scout-Remote-Design-Spec-v1.2.pdf), authored under the
-> working name "Scout Remote") is historical.
+> The [v1.2 markdown](docs/design-spec-v1.2.md), authored under the working
+> name "Scout Remote", is historical. The source PDF is not distributed in
+> this repository.
 
 ## Product boundary
 
@@ -172,13 +172,16 @@ reasoning is retained in
 
 ## Build and test
 
-Requires the .NET 10 SDK (pinned by `global.json`) and JDK 17+. CI runs the
-same three checks on every pull request.
+Requires the .NET 10 SDK (pinned by `global.json`) and JDK 17+. CI runs six
+jobs on every pull request: contracts, .NET, Kotlin, Android, cross-language
+e2e, and MCP stdio.
 
 ```bash
 # .NET: domain + bridge + MCP smoke
-dotnet build Lantern.sln -c Release
-dotnet test --solution Lantern.sln -c Release --no-build
+dotnet restore Lantern.sln --locked-mode
+dotnet build Lantern.sln -c Release --no-restore
+dotnet run --project src/shared/Lantern.Domain.Tests/Lantern.Domain.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
+dotnet run --project plugin/lantern-plugin/bridge/Lantern.Bridge.Tests/Lantern.Bridge.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
 
 # Kotlin: mobile core + unit tests
 ( cd src/mobile && ./gradlew :core:build )
@@ -198,6 +201,10 @@ python3 contracts/validate_examples.py   # pip install jsonschema
 
 See [`docs/phase0-report.md`](docs/phase0-report.md) for the Phase 0 evidence
 map. The real-tenant kit is [`scripts/smoke-tenant/README.md`](scripts/smoke-tenant/README.md).
+Production gates are tracked in
+[`docs/enterprise-readiness.md`](docs/enterprise-readiness.md). Security reports
+and contribution requirements are in [`SECURITY.md`](SECURITY.md) and
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 `./.cursor/install.sh` bootstraps a fresh machine (installs the .NET SDK if
 missing, then builds both toolchains). It is idempotent.

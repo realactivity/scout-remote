@@ -11,6 +11,8 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 LOCAL = Path(__file__).resolve().parent / ".local"
@@ -20,6 +22,19 @@ LOCAL.mkdir(parents=True, exist_ok=True)
 def fail(message: str) -> int:
     print(f"FAIL: {message}")
     return 1
+
+
+def new_ulid() -> str:
+    alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+    value = int.from_bytes(
+        int(time.time() * 1000).to_bytes(6, "big") + os.urandom(10),
+        "big",
+    )
+    encoded = []
+    for _ in range(26):
+        encoded.append(alphabet[value & 31])
+        value >>= 5
+    return "".join(reversed(encoded))
 
 
 def main() -> int:
@@ -80,7 +95,7 @@ def main() -> int:
         "protocol": "lantern",
         "version": "1.0",
         "agentId": "primary",
-        "bridgeVersion": "0.2.0",
+        "bridgeVersion": "0.2.1",
         "capabilities": [
             "status.read",
             "activity.read",
@@ -91,22 +106,33 @@ def main() -> int:
         "nativeScoutChatMirror": False,
         "remoteApprovals": False,
     }
-    put = graph_request(
-        "PUT",
-        f"{graph}/me/drive/special/approot:/protocol.json:/content",
-        headers={**headers, "Content-Type": "application/json"},
-        data=json.dumps(protocol),
-    )
-    checklist.append(("desktop persona wrote protocol.json", "PASS" if put.ok else "FAIL"))
-
     got = graph_request(
         "GET",
         f"{graph}/me/drive/special/approot:/protocol.json:/content",
         headers=headers,
     )
+    if got.status_code == 404:
+        put = graph_request(
+            "PUT",
+            f"{graph}/me/drive/special/approot:/protocol.json:/content",
+            headers={
+                **headers,
+                "Content-Type": "application/json",
+                "If-None-Match": "*",
+            },
+            data=json.dumps(protocol),
+        )
+        checklist.append(("desktop persona created protocol.json", "PASS" if put.ok else "FAIL"))
+        got = graph_request(
+            "GET",
+            f"{graph}/me/drive/special/approot:/protocol.json:/content",
+            headers=headers,
+        )
+    else:
+        checklist.append(("existing protocol.json left unchanged", "PASS" if got.ok else "FAIL"))
     checklist.append(("mobile-sim persona read protocol.json", "PASS" if got.ok else "FAIL"))
 
-    command_id = "01KZYMGHG0NPD8AF5A96MP2YFW"
+    command_id = new_ulid()
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     command = {
         "schemaVersion": 1,
@@ -120,10 +146,20 @@ def main() -> int:
     inbox = graph_request(
         "PUT",
         f"{graph}/me/drive/special/approot:/commands/inbox/{command_id}.json:/content",
-        headers={**headers, "Content-Type": "application/json"},
+        headers={
+            **headers,
+            "Content-Type": "application/json",
+            "If-None-Match": "*",
+        },
         data=json.dumps(command),
     )
     checklist.append(("mobile-sim wrote inbox command", "PASS" if inbox.ok else "FAIL"))
+    inbox_read = graph_request(
+        "GET",
+        f"{graph}/me/drive/special/approot:/commands/inbox/{command_id}.json:/content",
+        headers=headers,
+    )
+    checklist.append(("desktop-sim read inbox command", "PASS" if inbox_read.ok else "FAIL"))
 
     if os.environ.get("LANTERN_RUN_BRIDGE") == "1":
         print("LANTERN_RUN_BRIDGE=1: run the local bridge against Graph yourself:")
@@ -132,6 +168,14 @@ def main() -> int:
     checklist.append(("Scout heartbeat/automations not policy-disabled", "HUMAN"))
     checklist.append(("Local stdio MCP servers allowed by tenant policy", "HUMAN"))
     checklist.append(("Admin-consent behavior for Files.ReadWrite.AppFolder confirmed", "HUMAN"))
+
+    if os.environ.get("LANTERN_SMOKE_CLEANUP") == "1":
+        cleaned = graph_request(
+            "DELETE",
+            f"{graph}/me/drive/special/approot:/commands/inbox/{command_id}",
+            headers=headers,
+        )
+        checklist.append(("smoke command cleaned up", "PASS" if cleaned.ok else "FAIL"))
 
     print_checklist(checklist)
     (LOCAL / "last-run.json").write_text(json.dumps({"approot": item.get("id"), "checklist": checklist}, indent=2))
@@ -149,7 +193,11 @@ def graph_request(method: str, url: str, **kwargs):
         try:
             wait = max(int(raw), 1)
         except ValueError:
-            wait = 2
+            try:
+                wait = max(int((parsedate_to_datetime(raw) - datetime.now(timezone.utc)).total_seconds()), 1)
+            except (TypeError, ValueError):
+                wait = 2
+        wait = min(wait, 30)
         time.sleep(wait)
         response = requests.request(method, url, timeout=30, **kwargs)
     return response

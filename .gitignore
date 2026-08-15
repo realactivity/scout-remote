@@ -9,6 +9,8 @@ plugin/lantern-plugin/bridge/publish/
 artifacts/
 TestResults/
 *.binlog
+__pycache__/
+*.py[cod]
 
 # Gradle / Kotlin
 build/

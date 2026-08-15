@@ -7,27 +7,32 @@
 # and warms both toolchains' caches. It is safe to re-run.
 set -euo pipefail
 
-# Keep in sync with <TargetFramework> in Directory.Build.props.
-dotnet_major="10"
-
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+dotnet_sdk="$(python3 -c 'import json; print(json.load(open("global.json"))["sdk"]["version"])')"
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
-echo "==> Ensuring .NET ${dotnet_major} SDK is present"
-if command -v dotnet >/dev/null 2>&1 && dotnet --list-sdks | grep -q "^${dotnet_major}\."; then
-  echo "    .NET ${dotnet_major} SDK already installed: $(dotnet --list-sdks | grep "^${dotnet_major}\." | tail -1)"
+echo "==> Ensuring a global.json-compatible .NET SDK is present"
+if command -v dotnet >/dev/null 2>&1 && dotnet --version >/dev/null 2>&1; then
+  echo "    compatible .NET SDK already installed: $(dotnet --version)"
 else
-  echo "    installing dotnet-sdk-${dotnet_major}.0 via apt"
-  sudo apt-get update -qq
-  sudo apt-get install -y -qq "dotnet-sdk-${dotnet_major}.0"
+  echo "    installing .NET SDK ${dotnet_sdk}"
+  installer="$(mktemp)"
+  trap 'rm -f "$installer"' EXIT
+  curl --fail --location --silent --show-error \
+    https://dot.net/v1/dotnet-install.sh \
+    --output "$installer"
+  bash "$installer" --version "$dotnet_sdk" --install-dir "$HOME/.dotnet"
+  sudo ln -sfn "$HOME/.dotnet/dotnet" /usr/local/bin/dotnet
+  export PATH="$HOME/.dotnet:$PATH"
 fi
 
 echo "==> Restoring and building the .NET solution"
-dotnet build Lantern.sln -c Release
+dotnet restore Lantern.sln --locked-mode
+dotnet build Lantern.sln -c Release --no-restore
 
 echo "==> Warming the Kotlin/Gradle toolchain and building :core"
 ( cd src/mobile && ./gradlew :core:build --no-daemon )

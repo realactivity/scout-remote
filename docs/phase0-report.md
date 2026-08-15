@@ -12,17 +12,20 @@ process.
 |---|---|
 | Contract golden files still round-trip on both sides | `ContractGoldenFileTests` (.NET), `ContractGoldenFileTest` (Kotlin), `python3 contracts/validate_examples.py` |
 | Filesystem App Folder store: create-if-absent, ETag, delta, path escape | `FilesystemStoreTests`, `FilesystemAppFolderStoreTest` |
+| Graph retry preserves request bodies and request-level preconditions | `GraphAppFolderStoreTests` |
 | One command, exactly once, ack then complete | `InboxProcessorTests.ProcessOnceAcknowledgesThenCompletesExactlyOnce`, `CrossLanguageSmokeTest` |
+| Crash recovery fails closed after acknowledgement and repairs terminal receipts | `InboxProcessorTests.ExistingAcknowledgementIsNotExecutedAgain`, `TerminalResponseWithoutReceiptRepairsReceiptAndSkipsExecution` |
 | Expired command: `expired` disposition, never executed | `InboxProcessorTests.ExpiredCommandGetsExpiredDispositionAndNeverExecutes` |
 | Replay / duplicate inbox file skipped | `InboxProcessorTests.ReplayAfterReceiptIsSkipped` |
+| Protocol major and inbox filename / command ID mismatch stop execution | `InboxProcessorTests.IncompatibleProtocolStopsInboxProcessing`, `FilenameMustMatchCommandId` |
 | Schema-invalid and unknown-field commands rejected with an audit event | `InboxProcessorTests.UnknownFieldAndSchemaInvalidAreRejectedWithAuditEvent` |
 | Prompt-injection text refused and audited | `InboxProcessorTests.PromptInjectionIsRefusedAndAudited` |
 | No secrets in the harness approot after a run | `InboxProcessorTests.NoSecretsInApprootAfterProcess`, e2e sweep |
 | MCP stdio: initialize, list tools, `publish_status`, `read_inbox`, no credentials | `McpStdioSmokeTests` |
-| Kotlin `CommandService` / `BridgeSyncService` / ULID / protocol gate | `CommandServiceTest`, `BridgeSyncServiceTest`, `UlidTest` |
+| Kotlin durable offline queue retry, bounded in-flight watch, ULID, protocol gate | `CommandServiceTest`, `BridgeSyncServiceTest`, `UlidTest` |
 | Activity day-folder reads and `paneStatus` mapping | `GraphBridgeTransportTest`, `dev.lantern.core.brand.BrandTokensTest` |
 | Android app compiles; theme hexes come from `docs/brand-tokens.json` | `:app:assembleDebug`, `BrandTokensTest`, `BrandThemeSourceTest` |
-| Home stale `lastSeenUtc` maps the pane to offline | `HomeViewModelTest` |
+| Home protocol blocking, in-flight response, stale pane | `HomeViewModelTest` |
 
 ## Human-gated (not run in CI)
 
@@ -38,16 +41,19 @@ process.
 
 ```bash
 # Existing suites
-dotnet build Lantern.sln -c Release
-dotnet test --solution Lantern.sln -c Release --no-build
-( cd src/mobile && ./gradlew :core:build )
+dotnet restore Lantern.sln --locked-mode
+dotnet build Lantern.sln -c Release --no-restore
+dotnet run --project src/shared/Lantern.Domain.Tests/Lantern.Domain.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
+dotnet run --project plugin/lantern-plugin/bridge/Lantern.Bridge.Tests/Lantern.Bridge.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
+( cd src/mobile && ./gradlew :core:build --no-daemon )
+python3 -m pip install --requirement scripts/requirements-ci.txt
 python3 contracts/validate_examples.py
 
 # Cross-language e2e (CI job smoke-e2e)
 scripts/smoke-e2e/run.sh
 
 # Android app + theme unit tests (CI job android)
-( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
+( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon )
 
 # Optional MCP helper (CI still uses McpStdioSmokeTests)
 python3 scripts/smoke-mcp/run.py
@@ -71,3 +77,4 @@ python3 scripts/smoke-tenant/smoke.py
 
 iOS, Mode B/C, remote approvals, native Scout chat mirroring, schema
 changes, Play Store signing, or any edit to `docs/design-spec-v1.2.*`.
+The complete production gate list is in `docs/enterprise-readiness.md`.

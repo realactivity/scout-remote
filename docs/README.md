@@ -7,8 +7,7 @@ Reference architecture, decision records, and brand system for Lantern.
 | File | Purpose |
 |---|---|
 | [`design-spec-v2.0.md`](design-spec-v2.0.md) | **Authoritative design specification.** Lantern brand, Kotlin mobile framework, merged latency addendum, explicit compatibility policy (§15.2), and command-authenticity threat model (§11.2). |
-| [`design-spec-v1.2.md`](design-spec-v1.2.md) | Historical. Markdown conversion of the original v1.2 spec, retained for provenance. Superseded by v2.0. |
-| [`Scout-Remote-Design-Spec-v1.2.pdf`](Scout-Remote-Design-Spec-v1.2.pdf) | Historical. The original v1.2 document, authored under the working name "Scout Remote". Superseded by v2.0. |
+| [`design-spec-v1.2.md`](design-spec-v1.2.md) | Historical v1.2 text, retained for provenance. The source PDF is not distributed in this repository. Superseded by v2.0. |
 
 ## Decision records
 
@@ -29,6 +28,7 @@ where noted, the forward plan.
 | [`brand-guidelines.md`](brand-guidelines.md) | Human brand and UX spec: color system, the "pane is the status" mapping to the protocol state model, typography, and a Compose adherence checklist. |
 | [`brand-tokens.json`](brand-tokens.json) | Machine-readable brand tokens extracted from the brand sheet; the source the Android Compose theme consumes. |
 | [`phase0-report.md`](phase0-report.md) | Phase 0 spike: what automation proves vs what remains human-gated. |
+| [`enterprise-readiness.md`](enterprise-readiness.md) | Automated controls and the tenant, device, packaging, reliability, and security gates required before production. |
 
 ## Conventions
 

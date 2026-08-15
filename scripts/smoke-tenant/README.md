@@ -33,8 +33,8 @@ Do not commit anything this kit writes locally:
 |---|---|---|
 | `LANTERN_CLIENT_ID` | yes | Entra public-client application ID |
 | `LANTERN_TENANT_ID` | yes | Tenant ID or `common` |
-| `LANTERN_USE_DEVICE_CODE` | no | Set to `1` (default) for device-code sign-in |
 | `LANTERN_RUN_BRIDGE` | no | Set to `1` to run `Lantern.Bridge --once` against Graph after the mobile-sim write |
+| `LANTERN_SMOKE_CLEANUP` | no | Set to `1` to remove the unique smoke inbox command after the read-back check |
 
 ## Run
 
@@ -45,7 +45,10 @@ export LANTERN_TENANT_ID="..."
 python3 scripts/smoke-tenant/smoke.py
 ```
 
-Graph calls retry once on HTTP 429 or 503 using `Retry-After`.
+Graph calls retry once on HTTP 429 or 503 using a bounded `Retry-After`.
+The script never overwrites an existing `protocol.json`; it creates one only
+when absent. Each run uses a fresh ULID command ID and reads the command back
+before optional cleanup.
 
 The script signs in once (device code), then uses that session as both the
 desktop and mobile-sim persona. That matches Mode A: one user, two clients,

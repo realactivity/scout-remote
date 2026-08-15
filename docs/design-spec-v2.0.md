@@ -10,10 +10,9 @@
 
 > **Authority.** This markdown document is the authoritative design specification.
 > It supersedes v1.2, which was authored under the working name "Scout Remote"
-> ([Scout-Remote-Design-Spec-v1.2.pdf](Scout-Remote-Design-Spec-v1.2.pdf) and
-> [design-spec-v1.2.md](design-spec-v1.2.md)). Those files are retained as
-> historical records and are no longer authoritative anywhere they differ from
-> this document.
+> ([design-spec-v1.2.md](design-spec-v1.2.md)). The source PDF is not
+> distributed in this repository. The historical markdown is no longer
+> authoritative anywhere it differs from this document.
 
 **Design intent.** A secure mobile control plane for checking Scout status, reviewing bridge-owned chats and activity, sending bounded instructions, viewing artifacts, and understanding usage — without depending on undocumented Scout internals.
 

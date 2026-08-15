@@ -4,82 +4,103 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
 
 jobs:
   contracts:
     name: Contracts (schema validation)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - run: pip install "jsonschema>=4.23"
+          cache: pip
+          cache-dependency-path: scripts/requirements-ci.txt
+      - run: pip install --requirement scripts/requirements-ci.txt
       - run: python contracts/validate_examples.py
 
   dotnet:
     name: .NET (bridge domain + tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
-      - run: dotnet build Lantern.sln -c Release
-      # MTP mode of `dotnet test` (.NET 10, opted in via global.json) uses --solution.
-      - run: dotnet test --solution Lantern.sln -c Release --no-build
+          dotnet-version: "10.0.100"
+      - run: dotnet restore Lantern.sln --locked-mode
+      - run: dotnet build Lantern.sln -c Release --no-restore
+      # xUnit v3 test projects are executable. This is stable across MTP CLI feature bands.
+      - run: dotnet run --project src/shared/Lantern.Domain.Tests/Lantern.Domain.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
+      - run: dotnet run --project plugin/lantern-plugin/bridge/Lantern.Bridge.Tests/Lantern.Bridge.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
 
   kotlin:
     name: Kotlin (mobile core + tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :core:build
+      - uses: gradle/actions/setup-gradle@4733eaac7c1b0da527e4206b7671e0061de1ce37 # v6.3.0
+      - run: ./gradlew :core:build --no-daemon
         working-directory: src/mobile
 
   android:
     name: Android (app assemble + unit tests)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :app:assembleDebug :app:testDebugUnitTest
+      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - uses: gradle/actions/setup-gradle@4733eaac7c1b0da527e4206b7671e0061de1ce37 # v6.3.0
+      - run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
         working-directory: src/mobile
 
   smoke-e2e:
     name: Cross-language e2e smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
-      - uses: actions/setup-java@v4
+          dotnet-version: "10.0.100"
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: "17"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@4733eaac7c1b0da527e4206b7671e0061de1ce37 # v6.3.0
       - run: chmod +x scripts/smoke-e2e/run.sh && scripts/smoke-e2e/run.sh
 
   smoke-mcp:
     name: MCP stdio smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: "10.0.x"
-      - run: dotnet test plugin/lantern-plugin/bridge/Lantern.Bridge.Tests -c Release --filter FullyQualifiedName~McpStdioSmokeTests
+          dotnet-version: "10.0.100"
+      - run: dotnet restore plugin/lantern-plugin/bridge/Lantern.Bridge --locked-mode
+      - run: dotnet build plugin/lantern-plugin/bridge/Lantern.Bridge -c Release --no-restore
+      - run: python3 scripts/smoke-mcp/run.py

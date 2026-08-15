@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """Optional MCP stdio helper for humans without the .NET test host.
 
-CI uses Lantern.Bridge.Tests.McpStdioSmokeTests. This script is the same
-assertions over Content-Length JSON-RPC: initialize, list tools, invoke
-publish_status and read_inbox, and refuse credential-shaped payloads.
+CI uses Lantern.Bridge.Tests.McpStdioSmokeTests. This script exercises the
+same newline-delimited JSON-RPC transport, seeds one inbox command, lists
+tools, invokes publish_status and read_inbox, and scans for credential shapes.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import queue
 import subprocess
 import sys
 import tempfile
+import threading
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -29,29 +32,22 @@ def find_bridge() -> Path:
 
 
 def write_message(proc: subprocess.Popen[bytes], payload: dict) -> None:
-    body = json.dumps(payload).encode("utf-8")
-    header = f"Content-Length: {len(body)}\r\n\r\n".encode("ascii")
     assert proc.stdin is not None
-    proc.stdin.write(header + body)
+    proc.stdin.write(json.dumps(payload).encode("utf-8") + b"\n")
     proc.stdin.flush()
 
 
-def read_message(proc: subprocess.Popen[bytes]) -> dict:
+def read_message(proc: subprocess.Popen[bytes], timeout_seconds: float = 10) -> dict:
     assert proc.stdout is not None
-    headers: dict[str, str] = {}
-    while True:
-        line = proc.stdout.readline()
-        if not line:
-            err = proc.stderr.read() if proc.stderr else b""
-            raise SystemExit(f"MCP server closed stdout. stderr={err.decode('utf-8', 'replace')}")
-        if line in (b"\r\n", b"\n"):
-            break
-        decoded = line.decode("ascii", "replace")
-        key, _, value = decoded.partition(":")
-        headers[key.strip().lower()] = value.strip()
-    length = int(headers["content-length"])
-    body = proc.stdout.read(length)
-    return json.loads(body)
+    result: queue.Queue[bytes] = queue.Queue(maxsize=1)
+    threading.Thread(target=lambda: result.put(proc.stdout.readline()), daemon=True).start()
+    try:
+        line = result.get(timeout=timeout_seconds)
+    except queue.Empty:
+        raise SystemExit(f"MCP server did not respond within {timeout_seconds:g} seconds")
+    if not line:
+        raise SystemExit("MCP server closed stdout")
+    return json.loads(line)
 
 
 def rpc(proc: subprocess.Popen[bytes], method: str, params: dict | None, req_id: int) -> dict:
@@ -72,6 +68,26 @@ def main() -> int:
     state = root / "state"
     approot.mkdir()
     state.mkdir()
+    command_id = "01KZYMGHG0NPD8AF5A96MP2YFW"
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    inbox = approot / "commands" / "inbox"
+    inbox.mkdir(parents=True)
+    (inbox / f"{command_id}.json").write_text(
+        json.dumps(
+            {
+                "schemaVersion": 1,
+                "commandId": command_id,
+                "conversationId": "remote-mcp-smoke",
+                "type": "message",
+                "createdUtc": now.isoformat().replace("+00:00", "Z"),
+                "expiresUtc": (now + timedelta(hours=4)).isoformat().replace("+00:00", "Z"),
+                "requestedBy": {
+                    "entraObjectId": "00000000-0000-0000-0000-000000000000"
+                },
+                "text": "seeded MCP smoke command",
+            }
+        )
+    )
     env = os.environ.copy()
     env.update(
         {
@@ -95,7 +111,7 @@ def main() -> int:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "lantern-smoke", "version": "0.2.0"},
+                "clientInfo": {"name": "lantern-smoke", "version": "0.2.1"},
             },
             1,
         )
@@ -125,15 +141,30 @@ def main() -> int:
             return 1
         inbox = rpc(proc, "tools/call", {"name": "read_inbox", "arguments": {}}, 4)
         inbox_text = json.dumps(inbox)
-        if "eyJ" in inbox_text:
-            print("inbox result looked like a JWT")
+        if command_id not in inbox_text:
+            print("read_inbox did not return the seeded command")
             return 1
+        if "eyJ" in inbox_text or "client_secret" in inbox_text:
+            print("inbox result contained credential-shaped material")
+            return 1
+        forbidden = ("access_token", "refresh_token", "client_secret", "Bearer ", "eyJ")
+        for path in approot.rglob("*"):
+            if not path.is_file():
+                continue
+            contents = path.read_text(errors="replace")
+            if any(marker.lower() in contents.lower() for marker in forbidden):
+                print(f"credential-shaped material found in {path.relative_to(approot)}")
+                return 1
         print("MCP stdio smoke: PASS")
         print("tools:", ", ".join(sorted(names)))
         return 0
     finally:
-        proc.kill()
-        proc.wait(timeout=5)
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=5)
 
 
 if __name__ == "__main__":
