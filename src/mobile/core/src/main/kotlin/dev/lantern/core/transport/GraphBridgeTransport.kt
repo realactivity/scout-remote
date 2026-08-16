@@ -1,6 +1,9 @@
 package dev.lantern.core.transport
 
 import dev.lantern.core.application.BridgeTransport
+import dev.lantern.core.application.DeltaApplyResult
+import dev.lantern.core.application.IncrementalBridgeTransport
+import dev.lantern.core.application.StatefulBridgeTransport
 import dev.lantern.core.domain.ActivityEvent
 import dev.lantern.core.domain.AgentStatus
 import dev.lantern.core.domain.ArtifactDetails
@@ -12,6 +15,10 @@ import dev.lantern.core.domain.RemoteResponse
 import dev.lantern.core.storage.AppFolderStore
 import dev.lantern.core.storage.GraphAppFolderStore
 import dev.lantern.core.storage.ProtocolPaths
+import dev.lantern.core.storage.StoreReadResult
+import dev.lantern.core.sync.CachedFile
+import dev.lantern.core.sync.InMemorySyncStateStore
+import dev.lantern.core.sync.SyncStateStore
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
@@ -30,21 +37,18 @@ import kotlin.time.Duration.Companion.days
  */
 class GraphBridgeTransport(
     private val store: AppFolderStore,
+    override val syncState: SyncStateStore = InMemorySyncStateStore(),
     private val clock: () -> Instant = { Clock.System.now() },
-) : BridgeTransport {
+) : BridgeTransport, IncrementalBridgeTransport, StatefulBridgeTransport {
 
     private val json = ProtocolJson.json
 
     override suspend fun readProtocol(): ProtocolManifest? {
-        val item = store.get(ProtocolPaths.PROTOCOL) ?: return null
-        val text = item.content?.decodeToString() ?: return null
-        return json.decodeFromString<ProtocolManifest>(text)
+        return readJson(ProtocolPaths.PROTOCOL)
     }
 
     override suspend fun readStatus(agentId: String): AgentStatus? {
-        val item = store.get(ProtocolPaths.status(agentId)) ?: return null
-        val text = item.content?.decodeToString() ?: return null
-        return json.decodeFromString<AgentStatus>(text)
+        return readJson(ProtocolPaths.status(agentId))
     }
 
     override suspend fun enqueueCommand(command: RemoteCommand) {
@@ -53,16 +57,14 @@ class GraphBridgeTransport(
     }
 
     override suspend fun readResponse(commandId: String): RemoteResponse? {
-        val item = store.get(ProtocolPaths.response(commandId)) ?: return null
-        val text = item.content?.decodeToString() ?: return null
-        return json.decodeFromString<RemoteResponse>(text)
+        return readJson(ProtocolPaths.response(commandId))
     }
 
     override suspend fun readConversationEvents(conversationId: String): List<ConversationEvent> {
-        val listed = store.list(ProtocolPaths.conversationFolder(conversationId))
-        return listed
+        val prefix = ProtocolPaths.conversationFolder(conversationId)
+        return cachedOrListed(prefix)
             .filter { it.path.endsWith(".json") }
-            .mapNotNull { item -> decodeJson<ConversationEvent>(item.path) }
+            .mapNotNull { item -> readImmutableJson<ConversationEvent>(item) }
             .sortedBy { it.eventId }
     }
 
@@ -71,10 +73,15 @@ class GraphBridgeTransport(
         val effectiveSince = maxOf(sinceUtc, now - 30.days)
         val start = ProtocolPaths.activityDay(effectiveSince)
         val end = ProtocolPaths.activityDay(now)
-        return daysInclusive(start, end)
-            .flatMap { day -> store.list(ProtocolPaths.activityFolder(day)) }
+        var candidates = syncState.cachedFiles(ProtocolPaths.ACTIVITY)
+            .filter { it.lastModifiedUtc >= effectiveSince }
+        if (candidates.isEmpty() && syncState.deltaCursor() == null) {
+            candidates = daysInclusive(start, end)
+                .flatMap { day -> listedAsCache(ProtocolPaths.activityFolder(day)) }
+        }
+        return candidates
             .filter { it.path.endsWith(".json") }
-            .mapNotNull { item -> decodeJson<ActivityEvent>(item.path) }
+            .mapNotNull { item -> readImmutableJson<ActivityEvent>(item) }
             .filter { it.occurredUtc >= effectiveSince }
             .sortedBy { it.eventId }
     }
@@ -101,11 +108,76 @@ class GraphBridgeTransport(
         )
     }
 
-    private suspend inline fun <reified T> decodeJson(path: String): T? {
-        val file = store.get(path) ?: return null
+    override suspend fun applyDelta(): DeltaApplyResult {
+        val page = store.listDelta(syncState.deltaCursor())
+        if (page.reset) {
+            syncState.clearCachedFiles()
+        }
+        if (page.completeSnapshot) {
+            val currentPaths = page.items.map { it.path }.toSet()
+            syncState.cachedFiles("")
+                .filterNot { it.path in currentPaths }
+                .forEach { syncState.removeCachedFile(it.path) }
+        }
+        for (deleted in page.deletions) {
+            syncState.removeCachedFileByItemId(deleted.itemId)
+            deleted.path?.let { syncState.removeCachedFile(it) }
+        }
+        for (item in page.items) {
+            syncState.putCachedFile(item.toCache())
+        }
+        syncState.setDeltaCursor(page.cursor)
+        return DeltaApplyResult(page.items.size, page.deletions.size, page.reset)
+    }
+
+    private suspend fun cachedOrListed(prefix: String): List<CachedFile> {
+        val cached = syncState.cachedFiles(prefix)
+        return if (syncState.deltaCursor() != null) cached else cached.ifEmpty { listedAsCache(prefix) }
+    }
+
+    private suspend fun listedAsCache(prefix: String): List<CachedFile> {
+        val listed = store.list(prefix).map { it.toCache() }
+        listed.forEach { syncState.putCachedFile(it) }
+        return listed
+    }
+
+    private suspend inline fun <reified T> readJson(path: String): T? {
+        val cached = syncState.cachedFile(path)
+        val knownEtag = cached?.etag?.takeIf { cached.content != null }
+        val result = if (cached?.itemId != null) {
+            store.readByItemId(cached.itemId, knownEtag)
+        } else {
+            store.read(path, knownEtag)
+        }
+        val file = when (result) {
+            is StoreReadResult.Found -> {
+                val normalized = result.item.copy(path = path)
+                syncState.putCachedFile(normalized.toCache())
+                normalized
+            }
+            StoreReadResult.NotModified -> cached?.toStoredItem()
+            StoreReadResult.Missing -> {
+                syncState.removeCachedFile(path)
+                null
+            }
+        } ?: return null
         val text = file.content?.decodeToString() ?: return null
         return runCatching { json.decodeFromString<T>(text) }.getOrNull()
     }
+
+    private suspend inline fun <reified T> readImmutableJson(file: CachedFile): T? {
+        val content = file.content
+        if (content != null) {
+            return runCatching { json.decodeFromString<T>(content.decodeToString()) }.getOrNull()
+        }
+        return readJson(file.path)
+    }
+
+    private fun dev.lantern.core.storage.StoredItem.toCache(): CachedFile =
+        CachedFile(path, itemId, etag, lastModifiedUtc, content)
+
+    private fun CachedFile.toStoredItem(): dev.lantern.core.storage.StoredItem =
+        dev.lantern.core.storage.StoredItem(path, etag, itemId, lastModifiedUtc, content)
 
     companion object {
         const val PROTOCOL: String = ProtocolPaths.PROTOCOL

@@ -13,7 +13,7 @@ namespace Lantern.Bridge.Services;
 /// </summary>
 public sealed class BridgeService
 {
-    public const string BridgeVersion = "0.2.1";
+    public const string BridgeVersion = "0.3.0";
     public const int SchemaVersion = 1;
 
     private static readonly string[] Capabilities =

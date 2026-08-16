@@ -4,9 +4,11 @@ import android.app.Application
 import dev.lantern.app.identity.MsalIdentityService
 import dev.lantern.app.platform.AndroidExternalAppLauncher
 import dev.lantern.app.platform.KeystoreSecureStorage
+import dev.lantern.app.platform.LogcatLanternMetrics
 import dev.lantern.app.platform.MsalAuthCallbackHandler
 import dev.lantern.app.platform.SystemNotificationService
 import dev.lantern.app.platform.WorkManagerBackgroundScheduler
+import dev.lantern.app.storage.SqliteSyncStateStore
 import dev.lantern.core.application.BridgeSyncServiceImpl
 import dev.lantern.core.application.CommandServiceImpl
 import dev.lantern.core.application.FileCommandQueue
@@ -37,8 +39,11 @@ class LanternApp : Application() {
         super.onCreate()
         val approot = filesDir.resolve("approot").toPath()
         val queueDir = filesDir.resolve("command-queue").toPath()
+        secureStorage = KeystoreSecureStorage(this)
+        val syncState = SqliteSyncStateStore(this, secureStorage)
+        val metrics = LogcatLanternMetrics()
         val store = FilesystemAppFolderStore(approot)
-        val transport = GraphBridgeTransport(store)
+        val transport = GraphBridgeTransport(store, syncState = syncState)
         val clock = InstantClock.System
         identity = MsalIdentityService(this)
         commandService = CommandServiceImpl(
@@ -48,9 +53,14 @@ class LanternApp : Application() {
             requester = {
                 CommandRequester(identity.cachedObjectId() ?: "unsigned-local-dev")
             },
+            metrics = metrics,
         )
-        syncService = BridgeSyncServiceImpl(transport, clock)
-        secureStorage = KeystoreSecureStorage(this)
+        syncService = BridgeSyncServiceImpl(
+            transport = transport,
+            clock = clock,
+            syncState = syncState,
+            metrics = metrics,
+        )
         backgroundScheduler = WorkManagerBackgroundScheduler()
         notificationService = SystemNotificationService()
         authCallbackHandler = MsalAuthCallbackHandler()

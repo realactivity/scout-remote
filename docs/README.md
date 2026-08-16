@@ -29,6 +29,7 @@ where noted, the forward plan.
 | [`brand-tokens.json`](brand-tokens.json) | Machine-readable brand tokens extracted from the brand sheet; the source the Android Compose theme consumes. |
 | [`phase0-report.md`](phase0-report.md) | Phase 0 spike: what automation proves vs what remains human-gated. |
 | [`enterprise-readiness.md`](enterprise-readiness.md) | Automated controls and the tenant, device, packaging, reliability, and security gates required before production. |
+| [`client-metrics.md`](client-metrics.md) | Content-free runtime metrics, privacy boundary, and performance budgets. |
 
 ## Conventions
 

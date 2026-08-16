@@ -10,7 +10,11 @@ import dev.lantern.core.domain.CommandStatus
 import dev.lantern.core.domain.ProtocolJson
 import dev.lantern.core.domain.ProtocolManifest
 import dev.lantern.core.domain.RemoteResponse
+import dev.lantern.core.metrics.InMemoryLanternMetrics
+import dev.lantern.core.metrics.MetricGauge
+import dev.lantern.core.metrics.MetricOperation
 import dev.lantern.core.storage.FilesystemAppFolderStore
+import dev.lantern.core.sync.InMemorySyncStateStore
 import dev.lantern.core.transport.GraphBridgeTransport
 import java.nio.file.Files
 import kotlin.test.Test
@@ -70,11 +74,18 @@ class BridgeSyncServiceTest {
                 attention = AttentionInfo(required = false),
             )
             store.write("agents/primary/status.json", json.encodeToString(status).encodeToByteArray())
-            val sync = BridgeSyncServiceImpl(GraphBridgeTransport(store), InstantClock { now })
+            val metrics = InMemoryLanternMetrics()
+            val sync = BridgeSyncServiceImpl(
+                GraphBridgeTransport(store),
+                InstantClock { now },
+                metrics = metrics,
+            )
             val result = sync.refreshForeground()
             assertFalse(result.protocolIncompatible)
             assertEquals(AgentState.IDLE, result.status?.state)
             assertFalse(result.status!!.isStale(kotlin.time.Duration.parse("30m"), now))
+            assertEquals(MetricOperation.SYNC_FOREGROUND, metrics.operations.last().operation)
+            assertEquals(MetricGauge.SYNC_AGE_MS, metrics.gauges.last().gauge)
         } finally {
             dir.toFile().deleteRecursively()
         }
@@ -139,6 +150,38 @@ class BridgeSyncServiceTest {
 
             assertEquals(null, response)
             assertEquals(45.seconds, delays.fold(kotlin.time.Duration.ZERO) { total, item -> total + item })
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `watched response survives service recreation with shared sync state`() = runBlocking {
+        val dir = Files.createTempDirectory("lantern-watch-persist-")
+        try {
+            val store = FilesystemAppFolderStore(dir)
+            val state = InMemorySyncStateStore()
+            val transport = GraphBridgeTransport(store, syncState = state)
+            val commandId = "01KZYMGHG0NPD8AF5A96MP2YFW"
+            val first = BridgeSyncServiceImpl(transport, InstantClock { now })
+            first.watch(commandId)
+            store.write(
+                "responses/$commandId.json",
+                json.encodeToString(
+                    RemoteResponse(
+                        schemaVersion = 1,
+                        commandId = commandId,
+                        status = CommandStatus.COMPLETED,
+                        message = "done",
+                    ),
+                ).encodeToByteArray(),
+            )
+
+            val recreated = BridgeSyncServiceImpl(transport, InstantClock { now })
+            val result = recreated.refreshBackground()
+
+            assertEquals(CommandStatus.COMPLETED, result.newResponses.single().status)
+            assertTrue(state.watchedCommandIds().isEmpty())
         } finally {
             dir.toFile().deleteRecursively()
         }

@@ -95,7 +95,7 @@ def main() -> int:
         "protocol": "lantern",
         "version": "1.0",
         "agentId": "primary",
-        "bridgeVersion": "0.2.1",
+        "bridgeVersion": "0.3.0",
         "capabilities": [
             "status.read",
             "activity.read",

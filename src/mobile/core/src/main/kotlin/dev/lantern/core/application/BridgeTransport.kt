@@ -7,6 +7,7 @@ import dev.lantern.core.domain.ConversationEvent
 import dev.lantern.core.domain.ProtocolManifest
 import dev.lantern.core.domain.RemoteCommand
 import dev.lantern.core.domain.RemoteResponse
+import dev.lantern.core.sync.SyncStateStore
 import kotlinx.datetime.Instant
 
 /**
@@ -47,3 +48,17 @@ interface BridgeTransport {
      */
     suspend fun resolveArtifact(driveItemId: String): ArtifactDetails?
 }
+
+interface IncrementalBridgeTransport {
+    suspend fun applyDelta(): DeltaApplyResult
+}
+
+interface StatefulBridgeTransport {
+    val syncState: SyncStateStore
+}
+
+data class DeltaApplyResult(
+    val changedItems: Int,
+    val deletedItems: Int,
+    val reset: Boolean,
+)

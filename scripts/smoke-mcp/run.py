@@ -111,7 +111,7 @@ def main() -> int:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "lantern-smoke", "version": "0.2.1"},
+                "clientInfo": {"name": "lantern-smoke", "version": "0.3.0"},
             },
             1,
         )

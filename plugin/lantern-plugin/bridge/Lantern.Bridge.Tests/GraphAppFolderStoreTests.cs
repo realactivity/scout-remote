@@ -47,7 +47,6 @@ public sealed class GraphAppFolderStoreTests
         string? ifNoneMatch = null;
         var handler = new SequenceHandler(
             _ => Task.FromResult(Json(HttpStatusCode.OK, ApproootJson)),
-            _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)),
             request =>
             {
                 ifNoneMatch = string.Join(",", request.Headers.GetValues("If-None-Match"));
@@ -59,6 +58,71 @@ public sealed class GraphAppFolderStoreTests
 
         Assert.NotNull(item);
         Assert.Equal("*", ifNoneMatch);
+        Assert.Equal(2, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task DeltaPaginatesNestedPathsAndDeletions()
+    {
+        var nextLink = "https://graph.microsoft.com/v1.0/delta-page-2";
+        var deltaLink = "https://graph.microsoft.com/v1.0/delta-final";
+        var handler = new SequenceHandler(
+            _ => Task.FromResult(Json(HttpStatusCode.OK, ApproootJson)),
+            _ => Task.FromResult(Json(
+                HttpStatusCode.OK,
+                $$"""
+                {
+                  "value": [{
+                    "file": {},
+                    "id": "status-1",
+                    "name": "status.json",
+                    "eTag": "\"etag-1\"",
+                    "lastModifiedDateTime": "2026-08-15T05:00:00Z",
+                    "parentReference": {"path": "/drive/root:/Apps/Lantern/agents/primary"}
+                  }],
+                  "@odata.nextLink": "{{nextLink}}"
+                }
+                """)),
+            _ => Task.FromResult(Json(
+                HttpStatusCode.OK,
+                $$"""
+                {
+                  "value": [{
+                    "id": "old-response",
+                    "name": "old.json",
+                    "@removed": {"reason": "deleted"},
+                    "parentReference": {"path": "/drive/root:/Apps/Lantern/responses"}
+                  }],
+                  "@odata.deltaLink": "{{deltaLink}}"
+                }
+                """)));
+        var store = CreateStore(handler);
+
+        var page = await store.ListDeltaAsync(null);
+
+        Assert.Equal("agents/primary/status.json", Assert.Single(page.Items).Path);
+        Assert.Equal("responses/old.json", Assert.Single(page.Deletions).Path);
+        Assert.Equal(deltaLink, page.Cursor);
+        Assert.Equal(3, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task StaleDeltaCursorResetsFromInitialLink()
+    {
+        var deltaLink = "https://graph.microsoft.com/v1.0/delta-new";
+        var handler = new SequenceHandler(
+            _ => Task.FromResult(Json(HttpStatusCode.OK, ApproootJson)),
+            _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Gone)),
+            _ => Task.FromResult(Json(
+                HttpStatusCode.OK,
+                $$"""{"value":[],"@odata.deltaLink":"{{deltaLink}}"}""")));
+        var store = CreateStore(handler);
+
+        var page = await store.ListDeltaAsync("https://graph.microsoft.com/v1.0/delta-stale");
+
+        Assert.True(page.Reset);
+        Assert.Equal(deltaLink, page.Cursor);
+        Assert.Equal(3, handler.RequestCount);
     }
 
     private static GraphAppFolderStore CreateStore(
@@ -82,7 +146,7 @@ public sealed class GraphAppFolderStoreTests
         };
 
     private const string ApproootJson =
-        """{"id":"approot-1","parentReference":{"driveId":"drive-1"}}""";
+        """{"id":"approot-1","name":"Lantern","parentReference":{"driveId":"drive-1","path":"/drive/root:/Apps"}}""";
 
     private const string ItemJson =
         """{"id":"item-1","name":"status.json","eTag":"\"etag-1\"","lastModifiedDateTime":"2026-08-15T03:00:00Z"}""";
@@ -100,12 +164,14 @@ public sealed class GraphAppFolderStoreTests
         : HttpMessageHandler
     {
         private readonly Queue<Func<HttpRequestMessage, Task<HttpResponseMessage>>> _responses = new(responses);
+        public int RequestCount { get; private set; }
 
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             Assert.NotEmpty(_responses);
+            RequestCount++;
             return _responses.Dequeue()(request);
         }
     }

@@ -26,4 +26,10 @@ public interface IAppFolderStore
     Task<DeltaPage> ListDeltaAsync(string? cursor, CancellationToken cancellationToken = default);
 }
 
-public sealed record DeltaPage(IReadOnlyList<StoredItem> Items, string? Cursor);
+public sealed record DeltaPage(IReadOnlyList<StoredItem> Items, string? Cursor)
+{
+    public IReadOnlyList<DeletedItem> Deletions { get; init; } = [];
+    public bool Reset { get; init; }
+}
+
+public sealed record DeletedItem(string ItemId, string? Path);

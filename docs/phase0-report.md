@@ -24,6 +24,9 @@ process.
 | MCP stdio: initialize, list tools, `publish_status`, `read_inbox`, no credentials | `McpStdioSmokeTests` |
 | Kotlin durable offline queue retry, bounded in-flight watch, ULID, protocol gate | `CommandServiceTest`, `BridgeSyncServiceTest`, `UlidTest` |
 | Activity day-folder reads and `paneStatus` mapping | `GraphBridgeTransportTest`, `dev.lantern.core.brand.BrandTokensTest` |
+| Mobile conditional Graph reads, direct item IDs, delta pagination/paths/reset, and retry metrics | `GraphAppFolderStoreTest`, `GraphBridgeTransportTest` |
+| Durable sync metadata and protected payload separation | `SqliteSyncStateStoreTest` |
+| Content-free metric type boundary | `LanternMetricsTest` |
 | Android app compiles; theme hexes come from `docs/brand-tokens.json` | `:app:assembleDebug`, `BrandTokensTest`, `BrandThemeSourceTest` |
 | Home protocol blocking, in-flight response, stale pane | `HomeViewModelTest` |
 
