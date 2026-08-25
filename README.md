@@ -1,233 +1,249 @@
 # Lantern
 
 [![CI](https://github.com/realactivity/scout-remote/actions/workflows/ci.yml/badge.svg)](https://github.com/realactivity/scout-remote/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Spec](https://img.shields.io/badge/design%20spec-v2.0-6E7B8C.svg)](docs/design-spec-v2.0.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-EDE6D6?labelColor=0D1826&color=16273B)](LICENSE)
+[![Spec](https://img.shields.io/badge/design%20spec-v2.0-6E7B8C.svg?labelColor=0D1826)](docs/design-spec-v2.0.md)
+[![Status](https://img.shields.io/badge/project-paused-E8961E.svg?labelColor=0D1826)](docs/community.md)
 
-**Signals, not vibes.** A secure mobile companion for Microsoft Scout. Check what
-Scout is doing, review bridge-owned chats and activity, send bounded instructions,
-view artifacts, and understand usage, without depending on undocumented Scout
-internals.
+![lantern — Signals, not vibes.](docs/brand/lantern-hero.svg)
 
-Lantern ships as **"Lantern for Microsoft Scout"** — the nominative pattern (like
-Apollo for Reddit, Ivory for Mastodon): a distinct product name with "for Microsoft
-Scout" as a descriptor, verified against Microsoft's trademark guidelines. Brand and
-UX specs are in [`docs/brand-guidelines.md`](docs/brand-guidelines.md).
+**Signals, not vibes.** A mobile companion for Microsoft Scout. The phone
+checks what Scout is doing, reviews bridge-owned chats and activity, sends
+bounded instructions, and reads artifacts and usage. Phone and desktop never
+talk to each other. Approvals stay on the desktop.
 
-> **Status** Phase 0 Android spike implemented (spec v2.0, 15 August 2026).
-> Offline end-to-end is proven in CI. Tenant validation is human-gated
-> ([`docs/phase0-report.md`](docs/phase0-report.md)).
->
-> **Authoritative design** [`docs/design-spec-v2.0.md`](docs/design-spec-v2.0.md).
-> The [v1.2 markdown](docs/design-spec-v1.2.md), authored under the working
-> name "Scout Remote", is historical. The source PDF is not distributed in
-> this repository.
+This is an independent companion. It is not a Microsoft product and does not
+imply Microsoft authorship or endorsement. The store lockup is the nominative
+pattern **Lantern for Microsoft Scout**.
+
+> [!IMPORTANT]
+> **This project is paused.** Phase 0 (the Android protocol spike) is
+> implemented and proven offline in CI. Phase 1 is not started. Work stays
+> paused until there is community feedback on whether the App Folder command
+> mailbox is the right shape — or whether we should wait for Microsoft APIs
+> and swap the transport later. See [`docs/community.md`](docs/community.md)
+> and open an [architecture idea](.github/ISSUE_TEMPLATE/architecture-idea.yml)
+> if you have one.
+
+> [!NOTE]
+> Phase 0 is a **spike**, not a shippable app. There is no signed Play build,
+> no real-tenant proof, and no interactive phone sign-in in CI. WorkManager
+> and notifications are honest stubs. iOS is Phase 4.
+
+## Logo and palette
+
+The mark is an arched handle, a rounded body, and an inner flame. **The pane
+is the status:** the flame carries state. Copy stays terse and evidence-first
+("last seen 2m"), never vibes.
+
+![lantern for Microsoft Scout](docs/brand/lantern-lockup.svg)
+
+![Lantern palette](docs/brand/lantern-palette.svg)
+
+![The pane is the status](docs/brand/lantern-status.svg)
+
+| Token | Name | Hex | Role |
+|---|---|---|---|
+| `core.midnight` | Midnight | `#0D1826` | Canvas |
+| `core.steeple` | Steeple | `#16273B` | Raised surface, app-icon tile |
+| `core.bone` | Bone | `#EDE6D6` | Primary text and mark |
+| `core.candle` | Candle | `#FFC96B` | Accent and default flame |
+
+| Token | Status | Hex |
+|---|---|---|
+| `status.idle` | Idle | `#4CAF7D` |
+| `status.working` | Working | `#5B9BD9` |
+| `status.waiting` | Waiting / needs desktop | `#E8961E` |
+| `status.offline` | Offline / stale | `#7C8794` |
+| `status.error` | Error | `#E05252` |
+
+Authoritative sheet: [`docs/lantern-brand-sheet.svg`](docs/lantern-brand-sheet.svg).
+Extracted assets: [`docs/brand/`](docs/brand/). Tokens:
+[`docs/brand-tokens.json`](docs/brand-tokens.json). Guidelines:
+[`docs/brand-guidelines.md`](docs/brand-guidelines.md).
+
+## Why it is paused
+
+The architecture works on paper and in CI: versioned JSON in the user's
+OneDrive App Folder (`Files.ReadWrite.AppFolder`, `/me/drive/special/approot`).
+Mobile can *request*. Desktop Scout *decides*.
+
+Two instincts collide:
+
+1. **The mailbox will pass commands, but it may not be elegant enough.** A
+   file drop in App Folder is a least-privilege, user-owned bus. It may still
+   lack the latency, presence, or product feel a companion needs.
+2. **Build the product now, keep the domain interfaces, swap the transport
+   later.** Spec v2.0 already says this: if Microsoft ships a native Scout
+   API, replace the Graph adapter. Do not rewrite the app.
+
+Neither instinct is proven on a real tenant or a real phone. The interesting
+questions are architectural, not "please review my Kotlin." They belong to
+people who work on Scout, MCP, Agent Plugins, and Graph. That is what the
+pause is for. Concrete questions live in
+[`docs/community.md`](docs/community.md).
+
+## What is done, and what is not
+
+Honest split. Details and evidence:
+[`docs/status.md`](docs/status.md),
+[`docs/phase0-report.md`](docs/phase0-report.md),
+[`docs/enterprise-readiness.md`](docs/enterprise-readiness.md).
+
+### Done (CI-proven, no tenant)
+
+- Strict command inbox: schema, unknown fields, expiry, filename = `commandId`,
+  prompt-injection refuse, exactly-once receipts, terminal-response
+  immutability, protocol-major gate.
+- Graph client shape: conditional reads (`If-None-Match` / 304), item-ID
+  downloads, delta pagination + deletions + 410 reset, origin pin, 429/503
+  retry with fresh bodies, bounded `Retry-After`.
+- Mobile: `SyncStateStore` + Android `SqliteSyncStateStore` (SQLite metadata,
+  Keystore payloads), incremental sync, content-free `LanternMetrics`.
+- Desktop: Agent Plugins 1.0 package (`plugin/lantern-plugin/`), seven MCP
+  tools, MSAL in an OS-protected cache (fails closed if the cache is
+  unavailable).
+- Brand theme: Compose tokens load from `docs/brand-tokens.json`.
+- CI: SHA-pinned actions, locked restores, contracts / .NET / Kotlin /
+  Android / e2e / MCP smoke.
+
+The Agent Plugins 1.0 **package is coded** and schema-valid. Scout is **not**
+a native Agent Plugins client. Install is still "copy the skill, register the
+MCP server."
+
+### Not done (human-gated or unbuilt)
+
+- Real Entra app + Android and desktop redirects; both clients on the same
+  real approot.
+- Android Graph/MSAL outside the harness (`IdentityService` is a scaffold).
+- WorkManager and notifications (stubs).
+- Scout heartbeat / local MCP allowed by tenant policy; interactive MSAL on a
+  phone.
+- Signed Play build, soak, iOS (Phase 4), Mode B/C push.
+- Trademark clearance and font licensing (open in the brand guidelines).
 
 ## Product boundary
 
-Lantern is a **companion to the documented Windows/macOS Scout desktop
-application**, not a replacement for it, and not a native Scout runtime on
-mobile. The design deliberately does **not** assume
+Lantern is a companion to the documented Windows/macOS Scout desktop
+application. It is not a replacement, and not a native Scout runtime on
+mobile. The design does **not** assume
 
 - a public API for native Scout chat, session control, enumeration, or posting
-- a supported way to remotely approve Scout's sensitive actions (approvals stay
-  on the desktop, under Scout's own policy)
-- that Scout natively installs Agent Plugins 1.0 packages (the plugin is the
-  portable source of truth; its skill and MCP server are installed through
-  Scout-supported mechanisms)
+- a supported way to remotely approve Scout's sensitive actions
+- that Scout natively installs Agent Plugins 1.0 packages
 - any parsing or mutation of undocumented Scout databases, caches, or session
   files
 
-The stable contract is the **app-owned bridge protocol**. Versioned JSON is
-exchanged through the OneDrive App Folder, produced and consumed by the desktop
-bridge (Agent Plugin package) on one side and the mobile client on the other.
-Mobile can *request*. Desktop Scout *decides*.
+Scout runs on the OpenClaw runtime. Lantern uses **only documented surfaces
+(skills + MCP)**. The raw gateway, nodes, and channels are out of scope
+([`docs/scout-openclaw-substrate.md`](docs/scout-openclaw-substrate.md)).
 
-## Android-first sequencing
+## Architecture
 
-Launch sequencing is explicit in the spec.
+Asynchronous by design. OneDrive is a durable mailbox, so the phone and the
+PC never need a direct network connection.
 
-- **Phase 0 (spike) and Phase 1 (MVP) target Android only.** Entra public-client
-  registration is configured for Android and desktop redirects. The first
-  release covers Keystore-backed secure storage, Android background scheduling,
-  notifications, MSAL redirect handling, and Google Play internal/closed-test
-  packaging.
-- **iOS is Phase 4**, on the same shared domain, transport, identity, and
-  platform-service abstractions. iOS-specific Entra configuration, Keychain
-  storage, background behavior, and App Store work are deferred until that
-  phase. They do not block the Android MVP.
-- **Shared domain, application-service, transport, and protocol code stays free
-  of Android-only APIs.** That code lives in the pure-JVM Kotlin `core` module.
-  Platform specifics implement its interfaces (`SecureStorage`,
-  `BackgroundScheduler`, `NotificationService`, and others) in the Android
-  `app` module, so iOS is an implementation and testing phase, not an
-  architectural rewrite.
-
-## Architecture summary
-
-Asynchronous by design. OneDrive is a durable mailbox and state store, so the
-phone and the PC never need a direct network connection. The app stays useful
-when Scout is offline for hours.
-
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#16273B","primaryTextColor":"#EDE6D6","primaryBorderColor":"#26384F","lineColor":"#FFC96B","secondaryColor":"#142334","tertiaryColor":"#0D1826","background":"#0D1826","mainBkg":"#16273B","nodeBorder":"#26384F","clusterBkg":"#142334","titleColor":"#EDE6D6","edgeLabelBackground":"#0D1826","textColor":"#B9C2CE"}}}%%
+flowchart LR
+  subgraph phone["Mobile client"]
+    A["Android first · iOS Phase 4"]
+    B["MSAL public client"]
+    C["Shared domain contracts"]
+  end
+  subgraph m365["Microsoft 365 data plane"]
+    D["OneDrive App Folder"]
+    E["versioned JSON + artifacts"]
+  end
+  subgraph desk["Scout desktop"]
+    F["Agent Plugin package"]
+    G["local MCP bridge"]
+    H["approvals stay local"]
+  end
+  A --> D
+  B --> D
+  C --> E
+  D --> F
+  E --> G
+  G --> H
 ```
-  Single-user Microsoft 365 trust boundary
-  -----------------------------------------
-
-  Mobile client                 Microsoft 365 data plane      Scout desktop
-  Android first, iOS planned    Microsoft Graph               Agent Plugin package
-  MSAL public client            OneDrive App Folder           SKILL.md orchestration
-  shared app contracts          versioned command/response    local MCP bridge/helper
-  secure local token cache      protocol + driveItem          MSAL public client
-                                artifacts                     (same Entra app ID,
-                                                               separate token cache)
-                                                              heartbeat / automation
-                                                              approvals stay local
-```
-
-Key decisions are in spec §1 and §3 to §7.
 
 | Area | Decision |
 |---|---|
-| Identity | **One** Entra public-client app registration shared by mobile and desktop bridge. Each client signs in independently with MSAL and keeps its own OS-protected token cache. **Tokens are never transferred between devices.** |
-| Data plane | Microsoft Graph and the OneDrive **App Folder** (`Files.ReadWrite.AppFolder`). User-owned, least-privilege, cross-device. Both clients resolve the same `/me/drive/special/approot`. |
-| Desktop bridge | A **conformant Agent Plugins 1.0.0** bundle, validated against the official schemas. See [`plugin/lantern-plugin/README.md`](plugin/lantern-plugin/README.md). A Scout `SKILL.md` handles orchestration. A **local MCP bridge/helper** owns Graph authentication and protocol I/O. |
-| Chat model | **Bridge-owned conversations.** Append-only event streams, reproducible from protocol data. Native Scout chat mirroring is an optional, feature-flagged future adapter. |
-| Command semantics | Every command has an ID, timestamp, **expiry**, status, and auditable result. At-least-once observation, exactly-once effect. Idempotency uses processed receipts. Expired, replayed, or malformed commands never execute. |
-| Compatibility | **Tolerant reader, strict writer** (spec §15.2). Bridge-authored files may gain optional fields in a minor revision; readers ignore unknown fields. The one strict gate is the bridge's command inbox: a command that fails full schema validation is rejected, never executed. Mobile-authored evolution is gated by the `protocol.json` capability handshake. |
-| Safety | Sensitive work returns `waiting_for_desktop_approval`. There is no remote bypass of Scout approvals. Protocol text is treated as untrusted input (prompt-injection posture). Command authenticity rests on App Folder write access; `requestedBy` is audit metadata, never authorization (spec §11.2). No secrets ever land in OneDrive protocol JSON. |
-| Mobile framework | **Kotlin and Jetpack Compose** (spec §16; reasoning in [`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md)). The Graph transport can be swapped for a native Scout API adapter if Microsoft ships one. The desktop bridge stays on .NET. The `contracts/` schemas are the language-neutral boundary. |
-| Scout substrate | Scout runs on the OpenClaw runtime, but Lantern builds **only on the documented surfaces (skills + MCP)**, never the raw gateway/nodes/channels. A staged adoption roadmap pre-agrees what unlocks as Microsoft documents more. See [`docs/scout-openclaw-substrate.md`](docs/scout-openclaw-substrate.md). |
-| Deployment | Mode A (personal, no backend) for MVP. Optional notification service (Mode B) and enterprise brokering (Mode C) later. |
+| Identity | **One** Entra public-client app. Each client signs in independently with MSAL and keeps its own OS-protected token cache. Tokens never move between devices. |
+| Data plane | Microsoft Graph + OneDrive **App Folder** (`Files.ReadWrite.AppFolder`). Both clients resolve `/me/drive/special/approot`. |
+| Desktop bridge | Conformant Agent Plugins 1.0.0 bundle. A Scout `SKILL.md` orchestrates. A local MCP helper owns Graph auth and protocol I/O. |
+| Chat | Bridge-owned conversations. Native Scout chat mirroring is a future, feature-flagged adapter. |
+| Commands | ID, timestamp, **expiry**, status, auditable result. At-least-once observation, exactly-once effect. |
+| Compatibility | Tolerant reader, strict writer. The inbox is the one strict gate. |
+| Safety | Sensitive work returns `waiting_for_desktop_approval`. No remote bypass. Protocol text is untrusted. `requestedBy` is audit metadata, never authorization. No secrets in OneDrive JSON. |
+| Mobile | Kotlin + Jetpack Compose. Graph transport is swappable. Desktop stays on .NET. `contracts/` is the language-neutral boundary. |
+| Deployment | Mode A (personal, no backend) is the only current target. |
+
+Authoritative design: [`docs/design-spec-v2.0.md`](docs/design-spec-v2.0.md).
+v1.2 is historical.
 
 ## Repository layout
 
 ```
 lantern/
-├── docs/                          Reference architecture (spec v2.0; v1.2 kept as history),
-│                                  decision records, brand system
-├── contracts/                     Shared bridge-protocol contracts (JSON Schema and examples)
-│   ├── schemas/                   protocol, status, command, response, events, usage
-│   ├── examples/                  Canonical payloads from the spec (golden files)
-│   └── validate_examples.py       Schema validation of the golden files (run in CI)
+├── docs/                          Spec, brand, status, community notes
+├── contracts/                     JSON Schema + golden examples
 ├── src/
-│   ├── shared/
-│   │   ├── Lantern.Domain/        Bridge-side .NET protocol model
-│   │   └── Lantern.Domain.Tests/  .NET golden-file contract tests (xunit.v3)
+│   ├── shared/                    .NET protocol model + tests
 │   └── mobile/                    Kotlin Gradle project
-│       ├── core/                  Pure Kotlin/JVM. No Android APIs. Domain models,
-│       │                          ports, platform interfaces, golden-file contract tests
-│       └── app/                   Android client (Compose and MSAL).
-│                                  Phase 0 Home + brand theme. iOS in Phase 4.
-├── plugin/
-│   └── lantern-plugin/            Desktop bridge. Agent Plugins 1.0.0 package.
-│       ├── plugin.json            Identity and metadata (SPDX license field)
-│       ├── mcp.json               Typed stdio MCP server
-│       ├── CHANGELOG.md           SemVer history
-│       ├── LICENSE                MIT (travels with the package)
-│       ├── skills/lantern-bridge/
-│       └── bridge/Lantern.Bridge/
-├── scripts/
-│   ├── smoke-e2e/                 Cross-language harness (CI)
-│   ├── smoke-mcp/                 Optional stdio MCP helper (CI uses the .NET test)
-│   └── smoke-tenant/              Real Graph kit (human-gated, NEVER-COMMIT .local/)
-├── .github/workflows/ci.yml       CI: contracts, .NET, Kotlin, Android, e2e, MCP smoke
-├── global.json                    .NET SDK pin (10.0, latestFeature) + MTP test runner
-├── Lantern.sln
+│       ├── core/                  Pure JVM. No Android APIs.
+│       └── app/                   Android client (Compose). Phase 0 Home.
+├── plugin/lantern-plugin/         Agent Plugins 1.0.0 package + MCP bridge
+├── scripts/                       e2e, MCP, human-gated tenant kit
+├── .github/workflows/ci.yml
 └── LICENSE                        MIT
 ```
 
-## Getting started (Phase 0 spike)
-
-Build-time validation comes first. Scout is a Frontier product and Agent Plugins
-1.0 is new, so re-validate platform assumptions before coding (spec §3 and
-Appendix C).
-
-1. Re-check Scout docs for native Agent Plugins installation and MCP
-   registration paths, and confirm tenant policy has not disabled Scout
-   heartbeat/automations or blocked local stdio MCP servers
-   ([`docs/scout-openclaw-substrate.md`](docs/scout-openclaw-substrate.md)).
-2. Confirm `Files.ReadWrite.AppFolder` support in the target Microsoft 365
-   tenant.
-3. Register **one** Entra public-client app with Android and desktop/native
-   redirects (defer iOS platform config to Phase 4). No client secret ships in
-   any client.
-4. Install the plugin's `SKILL.md` into a supported Scout skills directory
-   (currently `~/.copilot/skills/`, or cloud-synced `~/.copilot/m-skills/`) and
-   register the local MCP bridge in Scout's MCP configuration (currently
-   `~/.copilot/mcp-config.json`). Run the desktop bridge sign-in once.
-5. Prove the round trip. Android and desktop independently resolve the same
-   `/me/drive/special/approot`. A hand-authored command is processed exactly
-   once, and a response lands back on the phone.
-
-The full first-time setup checklist and troubleshooting order are in the spec's
-operational runbook (§21).
-
-Spec v2.0 folds in the previously separate addenda: adaptive foreground polling
-for in-flight commands (§16.2), content-free Mode B push notifications when
-interactive use grows (§17.1), and validating the `Files.ReadWrite.AppFolder`
-tenant assumption in week one of Phase 0, before any feature code (§19). The
-reasoning is retained in
-[`docs/architecture-improvements.md`](docs/architecture-improvements.md) and
-[`docs/mobile-framework-kotlin.md`](docs/mobile-framework-kotlin.md).
-
 ## Build and test
 
-Requires the .NET 10 SDK (pinned by `global.json`) and JDK 17+. CI runs six
-jobs on every pull request: contracts, .NET, Kotlin, Android, cross-language
-e2e, and MCP stdio.
+Requires the .NET 10 SDK (`global.json`) and JDK 17+. CI runs six jobs on
+every pull request.
 
 ```bash
-# .NET: domain + bridge + MCP smoke
 dotnet restore Lantern.sln --locked-mode
 dotnet build Lantern.sln -c Release --no-restore
 dotnet run --project src/shared/Lantern.Domain.Tests/Lantern.Domain.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
 dotnet run --project plugin/lantern-plugin/bridge/Lantern.Bridge.Tests/Lantern.Bridge.Tests.csproj -c Release --no-build --no-restore -- -noColor -noLogo
 
-# Kotlin: mobile core + unit tests
 ( cd src/mobile && ./gradlew :core:build )
-
-# Android app (no emulator)
 ( cd src/mobile && ./gradlew :app:assembleDebug :app:testDebugUnitTest )
 
-# Cross-language e2e (Kotlin client + Lantern.Bridge --once)
 scripts/smoke-e2e/run.sh
-
-# Optional MCP helper (same assertions as McpStdioSmokeTests)
 python3 scripts/smoke-mcp/run.py
-
-# Contracts: validate the golden examples against the JSON Schemas
 python3 contracts/validate_examples.py   # pip install jsonschema
 ```
 
-See [`docs/phase0-report.md`](docs/phase0-report.md) for the Phase 0 evidence
-map. The real-tenant kit is [`scripts/smoke-tenant/README.md`](scripts/smoke-tenant/README.md).
-Production gates are tracked in
-[`docs/enterprise-readiness.md`](docs/enterprise-readiness.md). Security reports
-and contribution requirements are in [`SECURITY.md`](SECURITY.md) and
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+Real-tenant checks are human-gated:
+[`scripts/smoke-tenant/README.md`](scripts/smoke-tenant/README.md). Never
+commit its `.local/` directory.
 
-`./.cursor/install.sh` bootstraps a fresh machine (installs the .NET SDK if
-missing, then builds both toolchains). It is idempotent.
+`./.cursor/install.sh` bootstraps a fresh machine. It is idempotent.
 
-## Roadmap
+## Roadmap (unchanged, not in progress)
 
 | Phase | Scope |
 |---|---|
-| 0 | Android spike. MSAL on both ends, App Folder round trip, hand-authored protocol files. |
-| 1 | **Android MVP.** Home, Activity, Chats, Artifacts, Settings. Packaged skill and MCP bridge. Play internal test. |
-| 2 | Cost and polish. Usage screen, Work IQ budgets, diagnostics, retention controls. |
+| 0 | Android spike. Done in code. Tenant/device still human-gated. |
+| 1 | Android MVP. Home, Activity, Chats, Artifacts, Settings. Play internal test. **Not started.** |
+| 2 | Usage, Work IQ budgets, diagnostics, retention. |
 | 3 | Optional Azure notification service and Graph subscriptions. |
-| 4 | **iOS.** Platform config, Keychain, background work, notifications, App Store flow, same contract tests. |
-| 5 | Adapters. Official Scout API, native-chat mirror, optional Dynamics 365 direct. |
-| 6 | Enterprise. Admin policy, audit export, managed deployment. |
+| 4 | iOS, same contracts. |
+| 5 | Adapters: official Scout API, native-chat mirror, optional Dynamics 365. |
+| 6 | Enterprise: admin policy, audit export, managed deployment. |
 
-**Architecture invariant.** Even if Microsoft later ships first-party Scout
-mobile APIs, the domain-level interfaces (status, activity, remote command,
-response, artifact, usage) stay put. Swap the transport adapter. Do not rewrite
-the app.
+**Architecture invariant.** If Microsoft later ships first-party Scout mobile
+APIs, the domain interfaces stay. Swap the transport. Do not rewrite the app.
 
 ## License
 
-[MIT](LICENSE). The plugin package carries its own copy of the license plus the
-matching SPDX `license` field in its manifest, so it stays licensed when
-distributed separately.
+[MIT](LICENSE). The plugin package carries its own copy plus the SPDX
+`license` field so it stays licensed when distributed separately.
+
+Security reports: [`SECURITY.md`](SECURITY.md). Contribution rules, including
+the pause: [`CONTRIBUTING.md`](CONTRIBUTING.md).
