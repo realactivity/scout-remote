@@ -1,5 +1,5 @@
 {
-  "$comment": "Machine-readable brand tokens for the lantern mobile client. Source of truth is docs/lantern-brand-sheet.svg; every hex here appears verbatim in that file. Consumed by the future Android Compose theme (src/mobile/app). Human guidance and provenance: docs/brand-guidelines.md.",
+  "$comment": "Machine-readable brand tokens for the lantern mobile client. Source of truth is docs/lantern-brand-sheet.svg; every hex here appears verbatim in that file. Consumed by the Android Compose theme (src/mobile/app) and copied into app assets by Gradle. Compact SVG extracts: docs/brand/. Human guidance: docs/brand-guidelines.md.",
   "brand": {
     "name": "lantern",
     "displayName": "Lantern",

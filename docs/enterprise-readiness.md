@@ -5,6 +5,9 @@ enterprise-quality protocol and harness foundation with explicit release
 gates. This page prevents local and CI proof from being confused with tenant,
 device, deployment, or governance proof.
 
+> **Paused.** None of the open gates below are in progress. Public status:
+> [`status.md`](status.md). Community ask: [`community.md`](community.md).
+
 ## Automated controls
 
 | Control | Evidence |

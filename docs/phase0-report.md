@@ -3,6 +3,10 @@
 What the Android spike proves automatically, and what still needs a human
 with a Microsoft 365 tenant. Timestamps over adjectives.
 
+> **Paused.** This report is the evidence map for work that is already in the
+> tree. The project is not starting Phase 1 until community feedback lands.
+> See [`community.md`](community.md) and [`status.md`](status.md).
+
 ## Proven by automation
 
 These run in CI on every pull request. No tenant, no emulator, no Scout

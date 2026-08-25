@@ -24,7 +24,8 @@ other secrets in the report. Use synthetic values and redact logs.
 ## Supported versions
 
 The `main` branch is the only supported development line. There is no supported
-production release yet. Phase 0 proves the offline protocol path; real-tenant
+production release yet. The project is paused after a Phase 0 spike
+(`docs/community.md`). Phase 0 proves the offline protocol path; real-tenant
 authentication, Android Graph wiring, Scout policy, signing, and device
 acceptance remain release gates in `docs/enterprise-readiness.md`.
 

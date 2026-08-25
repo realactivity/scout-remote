@@ -1,0 +1,41 @@
+name: Architecture idea
+description: Propose a path for Lantern — mailbox, wait for APIs, or something else.
+title: "[architecture] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The project is paused for this kind of feedback. Read `docs/community.md` first.
+        Do not put tokens, tenant IDs, or real protocol files here. Security issues go through `SECURITY.md`.
+  - type: dropdown
+    id: path
+    attributes:
+      label: Path
+      options:
+        - A — Build the App Folder mailbox now; swap the transport later
+        - B — Wait for Microsoft / Scout first-party APIs
+        - C — A different mailbox or companion shape
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What should Lantern be, and what must it refuse (especially remote approvals)?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What you have already seen fail
+      description: Graph throttling, App Folder semantics, Scout plugin loading, MCP policy, mobile background limits — name the failure mode.
+    validations:
+      required: true
+  - type: textarea
+    id: trust
+    attributes:
+      label: Trust boundary
+      description: Who writes the command, who executes it, where tokens live, and what never leaves the desktop.
+    validations:
+      required: true

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Community notes
+    url: https://github.com/realactivity/scout-remote/blob/main/docs/community.md
+    about: Why the project is paused and which questions are useful.
+  - name: Security report
+    url: https://github.com/realactivity/scout-remote/security
+    about: Private vulnerability reporting. Do not file security issues in public.

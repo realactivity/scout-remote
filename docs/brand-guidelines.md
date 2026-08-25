@@ -6,9 +6,17 @@ for Microsoft Scout.
 > **Source of truth**
 > [`lantern-brand-sheet.svg`](lantern-brand-sheet.svg) is the authoritative brand
 > sheet. [`brand-tokens.json`](brand-tokens.json) is its machine-readable
-> extraction, faithful to the SVG hex values, meant to back the Android Compose
-> theme. This document is the human reading of both, plus the mapping from brand
-> to the protocol state model so the UX is unambiguous.
+> extraction, faithful to the SVG hex values, and the file the Android Compose
+> theme already consumes. Compact public extracts (icon, hero, lockup, palette,
+> status panes) live in [`brand/`](brand/). This document is the human reading
+> of the system, plus the mapping from brand to the protocol state model so the
+> UX is unambiguous.
+
+![lantern lockup](brand/lantern-lockup.svg)
+![lantern palette](brand/lantern-palette.svg)
+![lantern status panes](brand/lantern-status.svg)
+
+Full sheet (900×1420):
 
 ![lantern brand sheet](lantern-brand-sheet.svg)
 
@@ -126,16 +134,19 @@ icon corner radius is 42 px (at 176 px); status tiles use 14 px.
 
 ## UX adherence checklist (Phase 0 / 1 Compose)
 
-When the Android `app` module (`src/mobile/app`) is built, the Compose theme must:
+The Android `app` module (`src/mobile/app`) already loads `brand-tokens.json`
+into the Compose theme (`copyBrandTokens` + `BrandTokens.fromJson`). Remaining
+adherence:
 
-- [ ] Define color tokens from `brand-tokens.json`; do not hardcode ad-hoc hex.
-- [ ] Use Midnight as the surface/background and Bone as the on-surface text.
-- [ ] Drive all agent/command status affordances from the semantic status tokens
+- [x] Define color tokens from `brand-tokens.json`; do not hardcode ad-hoc hex.
+- [x] Use Midnight as the surface/background and Bone as the on-surface text.
+- [x] Drive all agent/command status affordances from the semantic status tokens
       via the mapping above; add no new status colors.
-- [ ] Derive stale/offline on-device from `lastSeenUtc`; never expect it on the wire.
+- [x] Derive stale/offline on-device from `lastSeenUtc`; never expect it on the wire.
 - [ ] Load Space Grotesk (display/wordmark), Roboto Flex (UI), IBM Plex Mono
       (evidence). Render timestamps, IDs, and protocol values in mono.
-- [ ] Keep copy terse and evidence-first, matching "Signals, not vibes."
+      Phase 0 maps system sans/mono to these roles; font licensing is still open.
+- [x] Keep copy terse and evidence-first, matching "Signals, not vibes."
 - [ ] Confirm the proposed status mappings with design before relying on them.
 
 ## Naming and positioning

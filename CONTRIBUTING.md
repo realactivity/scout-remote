@@ -3,6 +3,13 @@
 Lantern is a security-sensitive, polyglot repository. Changes should preserve
 the protocol boundary and keep claims tied to executable evidence.
 
+> **Paused.** Implementation of Phase 1 and new product surface is on hold
+> until there is community feedback on the App Folder mailbox versus waiting
+> for Microsoft APIs. Read [`docs/community.md`](docs/community.md) and prefer
+> an [architecture idea](.github/ISSUE_TEMPLATE/architecture-idea.yml) issue
+> over a feature pull request. Documentation fixes, CI hygiene, and tightly
+> scoped protocol-boundary fixes are still welcome.
+
 ## Development rules
 
 - Sign every commit with the Developer Certificate of Origin:
