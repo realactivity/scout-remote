@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" role="img" aria-label="Lantern status panes" font-family="'Space Grotesk','Segoe UI',Inter,Roboto,sans-serif">
+  <title>The pane is the status</title>
+  <rect width="800" height="240" rx="24" fill="#0D1826"/>
+  <text x="28" y="32" font-size="11" letter-spacing="3" fill="#6E7B8C">THE PANE IS THE STATUS</text>
+
+  <rect x="28" y="48" width="176" height="172" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(64,68) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#4CAF7D" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#4CAF7D"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="116" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Idle</text>
+  <text x="116" y="204" text-anchor="middle" font-size="12" fill="#7C8794">last seen 2m</text>
+
+  <rect x="217" y="48" width="176" height="172" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(253,68) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#5B9BD9" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#5B9BD9"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="305" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Working</text>
+  <text x="305" y="204" text-anchor="middle" font-size="12" fill="#7C8794">3 of 5 sources</text>
+
+  <rect x="406" y="48" width="176" height="172" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(442,68) scale(0.78)">
+    <circle cx="50" cy="50" r="34" fill="#E8961E" opacity="0.15"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#E8961E"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <text x="494" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Needs desktop</text>
+  <text x="494" y="204" text-anchor="middle" font-size="12" fill="#7C8794">approve locally</text>
+
+  <rect x="595" y="48" width="176" height="172" rx="16" fill="#142334" stroke="#223247"/>
+  <g transform="translate(631,68) scale(0.78)">
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#7C8794" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#7C8794"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#7C8794" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#33404F"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#7C8794"/>
+  </g>
+  <text x="683" y="184" text-anchor="middle" font-size="15" font-weight="600" fill="#EDE6D6">Offline / stale</text>
+  <text x="683" y="204" text-anchor="middle" font-size="12" fill="#7C8794">last seen 6h</text>
+</svg>

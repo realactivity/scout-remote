@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" role="img" aria-label="Lantern palette" font-family="'Space Grotesk','Segoe UI',Inter,Roboto,sans-serif">
+  <title>Lantern palette</title>
+  <rect width="900" height="280" rx="24" fill="#0D1826"/>
+  <text x="36" y="40" font-size="12" letter-spacing="3" fill="#6E7B8C">CORE</text>
+  <rect x="36" y="56" width="198" height="88" rx="14" fill="#0D1826" stroke="#2A3B52"/>
+  <rect x="246" y="56" width="198" height="88" rx="14" fill="#16273B"/>
+  <rect x="456" y="56" width="198" height="88" rx="14" fill="#EDE6D6"/>
+  <rect x="666" y="56" width="198" height="88" rx="14" fill="#FFC96B"/>
+  <text x="36" y="168" font-size="14" font-weight="600" fill="#EDE6D6">Midnight</text>
+  <text x="36" y="188" font-size="13" fill="#7C8794">#0D1826</text>
+  <text x="246" y="168" font-size="14" font-weight="600" fill="#EDE6D6">Steeple</text>
+  <text x="246" y="188" font-size="13" fill="#7C8794">#16273B</text>
+  <text x="456" y="168" font-size="14" font-weight="600" fill="#EDE6D6">Bone</text>
+  <text x="456" y="188" font-size="13" fill="#7C8794">#EDE6D6</text>
+  <text x="666" y="168" font-size="14" font-weight="600" fill="#EDE6D6">Candle</text>
+  <text x="666" y="188" font-size="13" fill="#7C8794">#FFC96B</text>
+  <text x="36" y="224" font-size="12" letter-spacing="3" fill="#6E7B8C">STATUS</text>
+  <circle cx="46" cy="250" r="10" fill="#4CAF7D"/>
+  <text x="64" y="255" font-size="13" fill="#7C8794">Idle #4CAF7D</text>
+  <circle cx="214" cy="250" r="10" fill="#5B9BD9"/>
+  <text x="232" y="255" font-size="13" fill="#7C8794">Working #5B9BD9</text>
+  <circle cx="410" cy="250" r="10" fill="#E8961E"/>
+  <text x="428" y="255" font-size="13" fill="#7C8794">Waiting #E8961E</text>
+  <circle cx="598" cy="250" r="10" fill="#7C8794"/>
+  <text x="616" y="255" font-size="13" fill="#7C8794">Offline #7C8794</text>
+  <circle cx="758" cy="250" r="10" fill="#E05252"/>
+  <text x="776" y="255" font-size="13" fill="#7C8794">Error #E05252</text>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 176" role="img" aria-label="Lantern app icon">
+  <title>Lantern</title>
+  <rect width="176" height="176" rx="42" fill="#16273B" stroke="#26384F" stroke-width="2"/>
+  <g transform="translate(18,24) scale(1.4)">
+    <circle cx="50" cy="50" r="34" fill="#FFC96B" opacity="0.16"/>
+    <path d="M36 20 A16 16 0 0 1 64 20" fill="none" stroke="#EDE6D6" stroke-width="6" stroke-linecap="round"/>
+    <rect x="32" y="18" width="36" height="9" rx="4" fill="#EDE6D6"/>
+    <rect x="29" y="27" width="42" height="46" rx="9" fill="none" stroke="#EDE6D6" stroke-width="6"/>
+    <rect x="38" y="36" width="24" height="28" rx="5" fill="#FFC96B"/>
+    <rect x="30" y="75" width="40" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+</svg>
