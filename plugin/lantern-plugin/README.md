@@ -92,6 +92,18 @@ supported mechanisms.
    storage is unavailable.
 5. **Enable the heartbeat/automation** with an acceptable cadence policy.
 
+On Windows, steps 2 and 3 are scripted by
+`scripts/install-scout-bridge.ps1`. Quit Scout, then:
+
+```powershell
+.\scripts\install-scout-bridge.ps1 -ClientId $env:LANTERN_CLIENT_ID -TenantId $env:LANTERN_TENANT_ID
+```
+
+The script writes `~/.copilot/mcp-config.json` and
+`~/.copilot/m-mcp-servers.json` using Copilot/Scout `type: local`. It cannot
+enable the server in Scout's Permissions UI. After it finishes, start Scout,
+open a new chat, and enable `lantern-bridge` under Manage Permissions.
+
 The moment Scout ships as a compatible client, steps 2 and 3 collapse to
 "load the plugin directory". A conformant client reads `plugin.json`,
 discovers the skill, and launches the typed stdio server with `PLUGIN_ROOT`
