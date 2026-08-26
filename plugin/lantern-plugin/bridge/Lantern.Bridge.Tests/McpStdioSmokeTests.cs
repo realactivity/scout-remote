@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Lantern.Bridge.Protocol;
@@ -16,19 +17,21 @@ public sealed class McpStdioSmokeTests
         using var approot = new TempDir();
         using var state = new TempDir();
         var store = new FilesystemAppFolderStore(approot.Path);
-        var commandJson = """
-            {
-              "schemaVersion": 1,
-              "commandId": "01KZYMGHG0NPD8AF5A96MP2YFW",
-              "conversationId": "remote-2026-08-13",
-              "type": "message",
-              "createdUtc": "2026-08-15T03:00:00Z",
-              "expiresUtc": "2026-08-16T03:00:00Z",
-              "requestedBy": { "entraObjectId": "00000000-0000-0000-0000-000000000000" },
-              "text": "seeded inbox command"
-            }
-            """;
-        await store.WriteAsync("commands/inbox/01KZYMGHG0NPD8AF5A96MP2YFW.json", Encoding.UTF8.GetBytes(commandJson));
+        const string commandId = "01KZYMGHG0NPD8AF5A96MP2YFW";
+        var now = DateTime.UtcNow;
+        var command = new
+        {
+            schemaVersion = 1,
+            commandId,
+            conversationId = "remote-mcp-smoke",
+            type = "message",
+            createdUtc = now.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            expiresUtc = now.AddHours(4).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
+            requestedBy = new { entraObjectId = "00000000-0000-0000-0000-000000000000" },
+            text = "seeded inbox command",
+        };
+        var commandJson = JsonSerializer.Serialize(command);
+        await store.WriteAsync($"commands/inbox/{commandId}.json", Encoding.UTF8.GetBytes(commandJson));
 
         var dll = Path.Combine(Path.GetDirectoryName(typeof(Lantern.Bridge.Services.BridgeService).Assembly.Location)!, "Lantern.Bridge.dll");
         Assert.True(File.Exists(dll), $"Bridge dll missing at {dll}");
@@ -68,7 +71,7 @@ public sealed class McpStdioSmokeTests
 
         var inbox = await client.CallToolAsync("read_inbox", new Dictionary<string, object?>());
         var inboxText = TextOf(inbox);
-        Assert.Contains("01KZYMGHG0NPD8AF5A96MP2YFW", inboxText);
+        Assert.Contains(commandId, inboxText);
         Assert.DoesNotContain("access_token", inboxText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("refresh_token", inboxText, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("client_secret", inboxText, StringComparison.OrdinalIgnoreCase);
