@@ -18,6 +18,7 @@ public sealed class McpStdioSmokeTests
         using var state = new TempDir();
         var store = new FilesystemAppFolderStore(approot.Path);
         const string commandId = "01KZYMGHG0NPD8AF5A96MP2YFW";
+        // read_inbox drops expired commands. Seed relative to now, not a fixture date.
         var now = DateTime.UtcNow;
         var command = new
         {
