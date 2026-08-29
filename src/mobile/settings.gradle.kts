@@ -6,7 +6,7 @@ pluginManagement {
     }
     plugins {
         kotlin("jvm") version "2.0.21"
-        kotlin("plugin.serialization") version "2.0.21"
+        kotlin("plugin.serialization") version "2.4.10"
         kotlin("android") version "2.0.21"
         id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
         id("com.android.application") version "8.7.3"
