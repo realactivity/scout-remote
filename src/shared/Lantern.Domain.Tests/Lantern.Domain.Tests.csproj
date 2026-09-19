@@ -8,7 +8,7 @@
     <Description>Golden-file contract tests: the bridge-side domain model must round-trip the canonical payloads in contracts/examples losslessly (the Kotlin core module runs the same fixtures; contracts/README.md rule 5).</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="xunit.v3" Version="4.0.0" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Lantern.Domain/Lantern.Domain.csproj" />
